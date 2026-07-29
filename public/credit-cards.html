@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinCore Bank — Credit Cards</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        .badge-active    { background:#DCFCE7; color:#15803D; }
+        .badge-blocked   { background:#FEE2E2; color:#B91C1C; }
+        .badge-expired   { background:#F1F5F9; color:#64748B; }
+        .badge-success   { background:#DCFCE7; color:#15803D; }
+        .badge-failed    { background:#FEE2E2; color:#B91C1C; }
+        .badge-pending   { background:#FEF3C7; color:#D97706; }
+        .badge-purchase  { background:#EDE9FE; color:#6D28D9; }
+        .badge-payment   { background:#DCFCE7; color:#15803D; }
+        .badge-refund    { background:#DBEAFE; color:#1D4ED8; }
+        .badge-cashback  { background:#CCFBF1; color:#0F766E; }
+        .badge-Visa       { background:#1A1F71; color:#FFFFFF; }
+        .badge-Mastercard { background:#EB001B; color:#FFFFFF; }
+        .badge-RuPay      { background:#1B4F8A; color:#FFFFFF; }
+
+        .cc-card {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+            border-radius: 14px;
+            padding: 20px 24px;
+            color: #fff;
+            min-width: 280px;
+            position: relative;
+            overflow: hidden;
+        }
+        .cc-card.blocked { background: linear-gradient(135deg, #4B5563 0%, #6B7280 100%); }
+        .cc-card.expired { background: linear-gradient(135deg, #374151 0%, #4B5563 100%); }
+        .cc-card::before {
+            content: '';
+            position: absolute;
+            top: -30px; right: -30px;
+            width: 140px; height: 140px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 50%;
+        }
+        .cc-card::after {
+            content: '';
+            position: absolute;
+            bottom: -40px; right: 30px;
+            width: 100px; height: 100px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+        }
+        .cc-number { font-size: 17px; letter-spacing: 3px; font-weight: 500; margin: 14px 0 10px; font-family: monospace; }
+        .cc-label  { font-size: 10px; opacity: 0.7; letter-spacing: 0.5px; text-transform: uppercase; }
+        .cc-value  { font-size: 13px; font-weight: 500; }
+
+        .util-bar { height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden; margin-top: 6px; }
+        .util-fill { height: 100%; border-radius: 4px; background: #fff; }
+        .util-fill.high { background: #FCA5A5; }
+        .util-fill.med  { background: #FCD34D; }
+
+        .due-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+        }
+        .due-urgent { background:#FEE2E2; color:#B91C1C; }
+        .due-soon   { background:#FEF3C7; color:#D97706; }
+        .due-ok     { background:#DCFCE7; color:#15803D; }
+
+        .payment-opt {
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px; padding: 14px 16px;
+            cursor: pointer; transition: all 0.15s;
+            margin-bottom: 10px;
+        }
+        .payment-opt:hover  { border-color: var(--blue); background: var(--blue-light); }
+        .payment-opt.selected { border-color: var(--blue); background: var(--blue-light); }
+        .payment-opt .opt-label { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+        .payment-opt .opt-amt   { font-size: 18px; font-weight: 700; color: var(--blue); }
+        .payment-opt .opt-desc  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+        .bal-positive { color:#15803D; font-weight:600; }
+        .bal-negative { color:#B91C1C; font-weight:600; }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" data-testid="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">F</div>
+            <div><div class="logo-text">FinCore Bank</div><div class="logo-sub">QA Practice Lab</div></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <a href="dashboard.html" class="nav-item" data-testid="nav-dashboard"><i class="ti ti-layout-dashboard nav-icon"></i><span>Dashboard</span></a>
+            <a href="accounts.html" class="nav-item" data-testid="nav-accounts"><i class="ti ti-building-bank nav-icon"></i><span>Accounts</span></a>
+            <a href="transactions.html" class="nav-item" data-testid="nav-transactions"><i class="ti ti-arrows-exchange nav-icon"></i><span>Transactions</span></a>
+            <div class="nav-section-label">Products</div>
+            <a href="customers.html" class="nav-item" data-testid="nav-customers"><i class="ti ti-users nav-icon"></i><span>Customers</span></a>
+            <a href="loans.html" class="nav-item" data-testid="nav-loans"><i class="ti ti-receipt nav-icon"></i><span>Loans</span></a>
+            <a href="credit-cards.html" class="nav-item active" data-testid="nav-credit-cards"><i class="ti ti-credit-card nav-icon"></i><span>Credit Cards</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="login.html" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <div>
+                    <div class="page-title">Credit Cards</div>
+                    <div class="page-subtitle">Manage credit cards, transactions and payments</div>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <span id="topbarUser" style="font-size:12px;color:var(--text-muted);"></span>
+                <div class="topbar-avatar" id="topbarAvatar">A</div>
+            </div>
+        </header>
+
+        <div class="page-body">
+
+            <!-- STAT CARDS -->
+            <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);" data-testid="cc-stat-grid">
+                <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-credit-card"></i></div><div><div class="stat-value" id="statTotal" data-testid="stat-total">—</div><div class="stat-label">Total Cards</div></div></div>
+                <div class="stat-card"><div class="stat-icon green"><i class="ti ti-circle-check"></i></div><div><div class="stat-value" id="statActive" data-testid="stat-active">—</div><div class="stat-label">Active</div></div></div>
+                <div class="stat-card"><div class="stat-icon red"><i class="ti ti-lock"></i></div><div><div class="stat-value" id="statBlocked" data-testid="stat-blocked">—</div><div class="stat-label">Blocked</div></div></div>
+                <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-clock"></i></div><div><div class="stat-value" id="statDueSoon" data-testid="stat-due-soon">—</div><div class="stat-label">Due Soon (≤5 days)</div></div></div>
+            </div>
+
+            <!-- TABLE -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="filters-row" style="margin-bottom:0;flex:1;">
+                        <select class="filter-select" id="statusFilter" data-testid="status-filter">
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="blocked">Blocked</option>
+                            <option value="expired">Expired</option>
+                        </select>
+                        <select class="filter-select" id="typeFilter" data-testid="card-type-filter">
+                            <option value="">All Card Types</option>
+                            <option value="Visa">Visa</option>
+                            <option value="Mastercard">Mastercard</option>
+                            <option value="RuPay">RuPay</option>
+                        </select>
+                        <select class="filter-select" id="rowsPerPage" data-testid="rows-per-page">
+                            <option value="10">10 rows</option>
+                            <option value="25">25 rows</option>
+                            <option value="50">50 rows</option>
+                        </select>
+                        <span class="total-count" id="totalCount" data-testid="total-count"></span>
+                    </div>
+                    <button class="btn btn-primary" id="addCardBtn" data-testid="add-card-btn"
+                            style="margin-left:16px;white-space:nowrap;display:none;">
+                        <i class="ti ti-plus"></i> New Card
+                    </button>
+                </div>
+
+                <div class="table-wrap">
+                    <table data-testid="credit-cards-table">
+                        <thead>
+                            <tr>
+                                <th>Card Number</th>
+                                <th>Customer</th>
+                                <th>Type</th>
+                                <th>Credit Limit</th>
+                                <th>Outstanding</th>
+                                <th>Available</th>
+                                <th>Min Due</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cardsBody" data-testid="cards-body">
+                            <tr class="loading-row"><td colspan="10">Loading credit cards...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-row">
+                    <span class="page-info" id="pageInfo" data-testid="page-info"></span>
+                    <div class="pagination" id="pagination" data-testid="pagination"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     CARD DETAIL POPUP
+     ============================================================ -->
+<div class="modal-overlay" id="cardModal" data-testid="card-modal">
+    <div class="modal-panel" style="width:900px;">
+        <div class="modal-header">
+            <span class="modal-title" id="cardModalTitle">Card Details</span>
+            <button class="modal-close" id="closeCardModal">✕</button>
+        </div>
+        <div class="modal-body" id="cardModalBody">
+            <p class="text-muted" style="text-align:center;padding:32px;">Loading...</p>
+        </div>
+        <div class="modal-footer" id="cardModalFooter"></div>
+    </div>
+</div>
+
+<!-- ============================================================
+     PAYMENT MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="paymentModal" data-testid="payment-modal">
+    <div class="modal-panel" style="width:480px;">
+        <div class="modal-header">
+            <span class="modal-title"><i class="ti ti-cash"></i> Make Payment</span>
+            <button class="modal-close" id="closePaymentModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="paymentError" class="alert alert-danger d-none"></div>
+            <div id="paymentSuccess" class="alert alert-success d-none"></div>
+            <input type="hidden" id="paymentCardId">
+            <p id="paymentCardInfo" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;background:#F8FAFC;padding:10px 12px;border-radius:6px;"></p>
+
+            <div class="payment-opt" id="opt-full" data-type="full" onclick="selectPaymentOpt('full')">
+                <div class="opt-label">Pay Full Outstanding</div>
+                <div class="opt-amt" id="opt-full-amt">—</div>
+                <div class="opt-desc">Clears entire outstanding balance</div>
+            </div>
+            <div class="payment-opt" id="opt-minimum" data-type="minimum" onclick="selectPaymentOpt('minimum')">
+                <div class="opt-label">Pay Minimum Due</div>
+                <div class="opt-amt" id="opt-min-amt">—</div>
+                <div class="opt-desc">Minimum amount required to avoid late fee</div>
+            </div>
+            <div class="payment-opt" id="opt-custom" data-type="custom" onclick="selectPaymentOpt('custom')">
+                <div class="opt-label">Pay Custom Amount</div>
+                <div class="opt-desc">Enter any amount between minimum due and full outstanding</div>
+                <input type="number" class="form-control" id="customPayAmt" data-testid="custom-pay-amt"
+                       placeholder="Enter amount" min="1"
+                       style="margin-top:8px;display:none;"
+                       onclick="event.stopPropagation()">
+            </div>
+
+            <div id="selectedPaymentType" style="display:none;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" id="cancelPaymentModal">Cancel</button>
+            <button class="btn btn-success" id="confirmPaymentBtn" data-testid="confirm-payment-btn" disabled>
+                <i class="ti ti-check"></i> Confirm Payment
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     NEW CARD MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="newCardModal" data-testid="new-card-modal">
+    <div class="modal-panel" style="width:480px;">
+        <div class="modal-header">
+            <span class="modal-title"><i class="ti ti-plus"></i> Issue New Credit Card</span>
+            <button class="modal-close" id="closeNewCardModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="newCardError" class="alert alert-danger d-none"></div>
+            <div id="newCardSuccess" class="alert alert-success d-none"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Customer ID *</label>
+                    <input type="number" class="form-control" id="ncCustomerId" data-testid="nc-customer-id" placeholder="Enter customer ID">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Card Type *</label>
+                    <select class="form-control" id="ncCardType" data-testid="nc-card-type">
+                        <option value="Visa">Visa</option>
+                        <option value="Mastercard">Mastercard</option>
+                        <option value="RuPay">RuPay</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Credit Limit (₹) *</label>
+                    <select class="form-control" id="ncCreditLimit" data-testid="nc-credit-limit">
+                        <option value="50000">₹50,000</option>
+                        <option value="100000">₹1,00,000</option>
+                        <option value="150000">₹1,50,000</option>
+                        <option value="200000">₹2,00,000</option>
+                        <option value="300000">₹3,00,000</option>
+                        <option value="500000">₹5,00,000</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" id="cancelNewCardModal">Cancel</button>
+            <button class="btn btn-primary" id="saveNewCardBtn" data-testid="save-new-card-btn">
+                <i class="ti ti-check"></i> Issue Card
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     BLOCK/UNBLOCK CONFIRM MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="blockConfirmModal" data-testid="block-confirm-modal">
+    <div class="modal-panel" style="width:420px;">
+        <div class="modal-header">
+            <span class="modal-title" id="blockConfirmTitle">Confirm Action</span>
+            <button class="modal-close" id="closeBlockConfirmModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <p id="blockConfirmMessage" style="font-size:14px;color:var(--text-primary);margin-bottom:8px;"></p>
+            <p style="font-size:12px;color:var(--text-muted);">This will take effect immediately.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" id="cancelBlockConfirmModal">Cancel</button>
+            <button class="btn btn-danger" id="confirmBlockBtn" data-testid="confirm-block-btn">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = 'http://localhost:3000/api';
+const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
+if (!user.username) window.location.href = 'login.html';
+document.getElementById('topbarUser').textContent = user.username || '';
+document.getElementById('topbarAvatar').textContent = (user.username||'A')[0].toUpperCase();
+
+if (user.role === 'admin') document.getElementById('addCardBtn').style.display = 'inline-flex';
+
+let currentPage=1, currentStatus='', currentType='', limit=10;
+let selectedPaymentType = null;
+
+function fmtDate(d) { return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtAmt(n)  { return '₹'+parseFloat(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function badge(cls,txt) { return `<span class="badge badge-${cls}">${txt}</span>`; }
+function statusBadge(s) { return badge(s,s); }
+function txnTypeBadge(t){ return badge(t,t); }
+
+function dueBadge(dueDate, outstanding, minimumDue) {
+    if (!dueDate || parseFloat(minimumDue) <= 0) return '—';
+    const days = Math.floor((new Date(dueDate) - new Date()) / (1000*60*60*24));
+    if (days < 0)  return `<span class="due-badge due-urgent"><i class="ti ti-alert-circle"></i> Overdue</span>`;
+    if (days <= 3) return `<span class="due-badge due-urgent"><i class="ti ti-alert-circle"></i> ${days}d left</span>`;
+    if (days <= 7) return `<span class="due-badge due-soon"><i class="ti ti-clock"></i> ${days}d left</span>`;
+    return `<span class="due-badge due-ok"><i class="ti ti-calendar"></i> ${fmtDate(dueDate)}</span>`;
+}
+
+function utilPct(outstanding, limit) {
+    const pct = Math.min(100, Math.round((parseFloat(outstanding)/parseFloat(limit))*100));
+    const cls  = pct >= 80 ? 'high' : pct >= 50 ? 'med' : '';
+    return { pct, cls };
+}
+
+// ----------------------------------------
+// STATS
+// ----------------------------------------
+async function loadStats() {
+    try {
+        const [tot,act,blk] = await Promise.all([
+            fetch(`${API}/credit-cards?limit=1`).then(r=>r.json()),
+            fetch(`${API}/credit-cards?limit=1&status=active`).then(r=>r.json()),
+            fetch(`${API}/credit-cards?limit=1&status=blocked`).then(r=>r.json()),
+        ]);
+        const alerts = await fetch(`${API}/dashboard/alerts`).then(r=>r.json());
+        document.getElementById('statTotal').textContent    = tot.total;
+        document.getElementById('statActive').textContent   = act.total;
+        document.getElementById('statBlocked').textContent  = blk.total;
+        document.getElementById('statDueSoon').textContent  = alerts.cards_due_soon?.length || 0;
+    } catch(e){ console.error(e); }
+}
+
+// ----------------------------------------
+// LOAD CARDS TABLE
+// ----------------------------------------
+async function loadCards(page=1) {
+    const tbody = document.getElementById('cardsBody');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="10">Loading...</td></tr>';
+    try {
+        const p = new URLSearchParams({page,limit});
+        if (currentStatus) p.append('status', currentStatus);
+        if (currentType)   p.append('card_type', currentType);
+
+        const res  = await fetch(`${API}/credit-cards?${p}`);
+        const data = await res.json();
+
+        document.getElementById('totalCount').textContent = `${data.total} card${data.total!==1?'s':''} found`;
+        document.getElementById('pageInfo').textContent   = `Page ${page} of ${Math.ceil(data.total/limit)||1}`;
+
+        if (!data.data.length) {
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text-muted);">No cards found</td></tr>';
+            renderPagination(0,page); return;
+        }
+
+        tbody.innerHTML = data.data.map(c => {
+            const { pct, cls } = utilPct(c.outstanding_balance, c.credit_limit);
+            const avail = parseFloat(c.credit_limit) - parseFloat(c.outstanding_balance);
+            return `
+            <tr data-testid="card-row-${c.id}" onclick="viewCard(${c.id})">
+                <td style="font-family:monospace;font-weight:600;">${c.card_number_masked}</td>
+                <td>
+                    <div class="fw-600">${c.customer_name}</div>
+                    <div class="text-muted">${c.customer_email||''}</div>
+                </td>
+                <td>${badge(c.card_type, c.card_type)}</td>
+                <td class="fw-600">${fmtAmt(c.credit_limit)}</td>
+                <td>
+                    <div class="${parseFloat(c.outstanding_balance)>0?'bal-negative':'bal-positive'}">${fmtAmt(c.outstanding_balance)}</div>
+                    <div style="height:4px;background:#E2E8F0;border-radius:2px;margin-top:3px;overflow:hidden;width:80px;">
+                        <div style="height:100%;width:${pct}%;background:${cls==='high'?'#EF4444':cls==='med'?'#F59E0B':'#22C55E'};border-radius:2px;"></div>
+                    </div>
+                </td>
+                <td class="bal-positive">${fmtAmt(avail)}</td>
+                <td class="${parseFloat(c.minimum_due)>0?'bal-negative':''}">
+                    ${parseFloat(c.minimum_due)>0?fmtAmt(c.minimum_due):'—'}
+                </td>
+                <td>${dueBadge(c.due_date, c.outstanding_balance, c.minimum_due)}</td>
+                <td>${statusBadge(c.status)}</td>
+                <td onclick="event.stopPropagation()" style="white-space:nowrap;">
+                    <button class="btn btn-outline btn-sm" title="View Card" onclick="viewCard(${c.id})">
+                        <i class="ti ti-eye"></i>
+                    </button>
+                    ${user.role==='admin' && c.status==='active' && parseFloat(c.outstanding_balance)>0 ? `
+                    <button class="btn btn-success btn-sm" title="Make Payment"
+                            onclick="openPayment(${c.id},'${c.card_number_masked}',${c.outstanding_balance},${c.minimum_due})"
+                            style="margin-left:4px;" data-testid="pay-btn-${c.id}">
+                        <i class="ti ti-cash"></i>
+                    </button>` : ''}
+                    ${user.role==='admin' ? `
+                    <button class="btn btn-outline btn-sm"
+                            title="${c.status==='blocked'?'Unblock':'Block'} Card"
+                            onclick="promptBlockToggle(${c.id},'${c.status}','${c.card_number_masked}')"
+                            style="margin-left:4px;${c.status==='blocked'?'color:var(--green);border-color:var(--green);':'color:var(--red);border-color:var(--red);'}"
+                            data-testid="block-btn-${c.id}">
+                        <i class="ti ti-${c.status==='blocked'?'lock-open':'lock'}"></i>
+                    </button>` : ''}
+                </td>
+            </tr>`;
+        }).join('');
+
+        renderPagination(data.total, page);
+    } catch(err) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--red);">Error: ${err.message}</td></tr>`;
+    }
+}
+
+// ----------------------------------------
+// PAGINATION
+// ----------------------------------------
+function renderPagination(total, page) {
+    const tp = Math.ceil(total/limit)||1;
+    const pg = document.getElementById('pagination');
+    pg.innerHTML = '';
+    const btn = (lbl,p,dis,act,tid) => {
+        const b=document.createElement('button');
+        b.className='page-btn'+(act?' active':'');
+        b.textContent=lbl; b.disabled=dis;
+        b.setAttribute('data-testid',tid);
+        b.addEventListener('click',()=>{currentPage=p;loadCards(p);});
+        pg.appendChild(b);
+    };
+    btn('←',page-1,page===1,false,'prev-page');
+    for(let i=Math.max(1,page-2);i<=Math.min(tp,page+2);i++) btn(String(i),i,false,i===page,`page-${i}`);
+    btn('→',page+1,page===tp,false,'next-page');
+    btn('»',tp,page===tp,false,'last-page');
+}
+
+// ----------------------------------------
+// VIEW CARD POPUP
+// ----------------------------------------
+async function viewCard(id) {
+    const modal  = document.getElementById('cardModal');
+    const body   = document.getElementById('cardModalBody');
+    const footer = document.getElementById('cardModalFooter');
+    body.innerHTML = '<p class="text-muted" style="text-align:center;padding:32px;">Loading...</p>';
+    footer.innerHTML = '';
+    modal.classList.add('open');
+
+    try {
+        const res  = await fetch(`${API}/credit-cards/${id}`);
+        const card = await res.json();
+
+        const outstanding = parseFloat(card.outstanding_balance);
+        const limit       = parseFloat(card.credit_limit);
+        const available   = limit - outstanding;
+        const utilPctVal  = Math.min(100, Math.round((outstanding/limit)*100));
+        const utilCls     = utilPctVal >= 80 ? 'high' : utilPctVal >= 50 ? 'med' : '';
+        const daysLeft    = card.due_date ? Math.floor((new Date(card.due_date)-new Date())/(1000*60*60*24)) : null;
+        const paidThisMonth = parseFloat(card.total_paid_this_month||0);
+
+        document.getElementById('cardModalTitle').innerHTML =
+            `<i class="ti ti-credit-card"></i>&nbsp; ${card.card_number_masked}&nbsp; ${badge(card.card_type,card.card_type)}&nbsp; ${statusBadge(card.status)}`;
+
+        body.innerHTML = `
+            <!-- CARD VISUAL + SUMMARY -->
+            <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start;margin-bottom:20px;">
+                <div class="cc-card ${card.status!=='active'?card.status:''}" style="min-width:260px;max-width:280px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div style="font-size:12px;opacity:0.8;">FinCore Bank</div>
+                        <div style="font-size:13px;font-weight:700;letter-spacing:1px;">${card.card_type.toUpperCase()}</div>
+                    </div>
+                    <div class="cc-number">${card.card_number_masked}</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;">
+                        <div>
+                            <div class="cc-label">Customer</div>
+                            <div class="cc-value" style="font-size:11px;">${card.customer_name.split(' ')[0]}</div>
+                        </div>
+                        <div>
+                            <div class="cc-label">Limit</div>
+                            <div class="cc-value" style="font-size:11px;">${fmtAmt(card.credit_limit)}</div>
+                        </div>
+                        <div>
+                            <div class="cc-label">Status</div>
+                            <div class="cc-value" style="font-size:11px;text-transform:capitalize;">${card.status}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <div class="cc-label">Utilisation ${utilPctVal}%</div>
+                        <div class="util-bar"><div class="util-fill ${utilCls}" style="width:${utilPctVal}%;"></div></div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="detail-grid" style="grid-template-columns:1fr 1fr;">
+                        <div class="detail-item"><label>Customer</label><span class="fw-600">${card.customer_name}</span></div>
+                        <div class="detail-item"><label>Phone</label><span>${card.customer_phone||'—'}</span></div>
+                        <div class="detail-item"><label>Credit Limit</label><span class="fw-600">${fmtAmt(card.credit_limit)}</span></div>
+                        <div class="detail-item"><label>Outstanding Balance</label>
+                            <span class="${outstanding>0?'bal-negative':'bal-positive'}" style="font-size:18px;">${fmtAmt(outstanding)}</span></div>
+                        <div class="detail-item"><label>Available Credit</label>
+                            <span class="bal-positive" style="font-size:16px;">${fmtAmt(available)}</span></div>
+                        <div class="detail-item"><label>Minimum Due</label>
+                            <span class="${parseFloat(card.minimum_due)>0?'bal-negative':''}" style="font-size:16px;">${parseFloat(card.minimum_due)>0?fmtAmt(card.minimum_due):'—'}</span></div>
+                        <div class="detail-item"><label>Payment Due Date</label>
+                            <span>${card.due_date ? `${dueBadge(card.due_date, card.outstanding_balance, card.minimum_due)} &nbsp;<span class="text-muted fs-12">${parseFloat(card.minimum_due)>0?(daysLeft!==null?(daysLeft<0?'Overdue':daysLeft===0?'Due today':`${daysLeft} days remaining`):''): 'Minimum due cleared'}</span>` : '—'}</span></div>
+                        <div class="detail-item"><label>Paid This Month</label>
+                            <span class="bal-positive">${fmtAmt(paidThisMonth)}</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRANSACTION HISTORY -->
+            <div class="detail-section">
+                <div class="detail-section-title">Transaction History</div>
+                ${card.transactions?.length ? `
+                <div class="table-wrap">
+                    <table data-testid="cc-txn-table">
+                        <thead>
+                            <tr><th>Date</th><th>Type</th><th>Merchant</th><th>Amount</th><th>Status</th><th>Reference</th></tr>
+                        </thead>
+                        <tbody>
+                            ${card.transactions.map(t=>`
+                                <tr>
+                                    <td class="text-muted" style="font-size:12px;white-space:nowrap;">${fmtDate(t.created_at)}</td>
+                                    <td>${txnTypeBadge(t.transaction_type)}</td>
+                                    <td style="font-size:13px;">${t.merchant_name||'—'}</td>
+                                    <td class="${t.transaction_type==='payment'||t.transaction_type==='cashback'?'bal-positive':'bal-negative'}" style="font-weight:600;">
+                                        ${t.transaction_type==='payment'||t.transaction_type==='cashback'?'-':'+'}${fmtAmt(t.amount)}
+                                    </td>
+                                    <td>${statusBadge(t.status)}</td>
+                                    <td class="text-muted" style="font-size:11px;font-family:monospace;">${t.reference_number}</td>
+                                </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>` : '<p class="text-muted fs-12" style="padding:8px 0;">No transactions found</p>'}
+            </div>
+        `;
+
+        // FOOTER ACTIONS
+        if (user.role === 'admin') {
+            let actions = `<button class="btn btn-outline" onclick="document.getElementById('cardModal').classList.remove('open')">Close</button>`;
+            if (card.status === 'active' && outstanding > 0) {
+                actions += `<button class="btn btn-success" style="margin-left:8px;"
+                    onclick="openPayment(${card.id},'${card.card_number_masked}',${card.outstanding_balance},${card.minimum_due})"
+                    data-testid="card-pay-btn">
+                    <i class="ti ti-cash"></i> Make Payment
+                </button>`;
+            }
+            if (card.status === 'active') {
+                actions += `<button class="btn btn-danger" style="margin-left:8px;"
+                    onclick="promptBlockToggle(${card.id},'active','${card.card_number_masked}')"
+                    data-testid="block-card-btn">
+                    <i class="ti ti-lock"></i> Block Card
+                </button>`;
+            } else if (card.status === 'blocked') {
+                actions += `<button class="btn btn-success" style="margin-left:8px;"
+                    onclick="promptBlockToggle(${card.id},'blocked','${card.card_number_masked}')"
+                    data-testid="unblock-card-btn">
+                    <i class="ti ti-lock-open"></i> Unblock Card
+                </button>`;
+            }
+            footer.innerHTML = actions;
+        } else {
+            footer.innerHTML = `<button class="btn btn-outline" onclick="document.getElementById('cardModal').classList.remove('open')">Close</button>`;
+        }
+    } catch(err) {
+        body.innerHTML = `<p style="color:var(--red);text-align:center;padding:24px;">Error: ${err.message}</p>`;
+    }
+}
+
+// ----------------------------------------
+// PAYMENT
+// ----------------------------------------
+function selectPaymentOpt(type) {
+    selectedPaymentType = type;
+    document.querySelectorAll('.payment-opt').forEach(o => o.classList.remove('selected'));
+    document.getElementById(`opt-${type}`).classList.add('selected');
+    document.getElementById('customPayAmt').style.display = type === 'custom' ? 'block' : 'none';
+    document.getElementById('confirmPaymentBtn').disabled = false;
+}
+
+function openPayment(cardId, cardMasked, outstanding, minDue) {
+    selectedPaymentType = null;
+    document.querySelectorAll('.payment-opt').forEach(o => o.classList.remove('selected'));
+    document.getElementById('customPayAmt').style.display = 'none';
+    document.getElementById('customPayAmt').value = '';
+    document.getElementById('paymentError').classList.add('d-none');
+    document.getElementById('paymentSuccess').classList.add('d-none');
+    document.getElementById('confirmPaymentBtn').disabled = true;
+
+    document.getElementById('paymentCardId').value = cardId;
+    document.getElementById('paymentCardInfo').textContent = `Card: ${cardMasked}`;
+    document.getElementById('opt-full-amt').textContent = fmtAmt(outstanding);
+    document.getElementById('opt-min-amt').textContent  = fmtAmt(minDue);
+    document.getElementById('paymentModal').classList.add('open');
+}
+
+document.getElementById('confirmPaymentBtn').addEventListener('click', async () => {
+    const cardId = document.getElementById('paymentCardId').value;
+    const type   = selectedPaymentType;
+    const errDiv = document.getElementById('paymentError');
+    const sucDiv = document.getElementById('paymentSuccess');
+
+    errDiv.classList.add('d-none');
+    sucDiv.classList.add('d-none');
+
+    if (!type) { errDiv.textContent='Please select a payment option.'; errDiv.classList.remove('d-none'); return; }
+
+    let amount = null;
+    if (type === 'custom') {
+        amount = parseFloat(document.getElementById('customPayAmt').value);
+        if (!amount || amount <= 0) {
+            errDiv.textContent = 'Please enter a valid amount.';
+            errDiv.classList.remove('d-none'); return;
+        }
+    }
+
+    try {
+        const res = await fetch(`${API}/credit-cards/${cardId}/payment`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ payment_type: type, amount })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            sucDiv.textContent = `Payment successful! Reference: ${data.reference}. New outstanding: ${fmtAmt(data.card.outstanding_balance)}`;
+            sucDiv.classList.remove('d-none');
+            setTimeout(() => {
+                document.getElementById('paymentModal').classList.remove('open');
+                document.getElementById('cardModal').classList.remove('open');
+                loadCards(currentPage);
+                loadStats();
+            }, 1500);
+        } else {
+            errDiv.textContent = data.error || 'Payment failed.';
+            errDiv.classList.remove('d-none');
+        }
+    } catch(err) {
+        errDiv.textContent = 'Server error. Please try again.';
+        errDiv.classList.remove('d-none');
+    }
+});
+
+// ----------------------------------------
+// BLOCK / UNBLOCK
+// ----------------------------------------
+let pendingBlock = null;
+
+function promptBlockToggle(cardId, currentStatus, cardMasked) {
+    const newStatus = currentStatus === 'blocked' ? 'active' : 'blocked';
+    const action    = newStatus === 'blocked' ? 'Block' : 'Unblock';
+    document.getElementById('blockConfirmTitle').textContent   = `${action} Card`;
+    document.getElementById('blockConfirmMessage').textContent =
+        `Are you sure you want to ${action.toLowerCase()} card ${cardMasked}?${newStatus==='blocked'?' All transactions will be declined until unblocked.':''}`;
+    const btn = document.getElementById('confirmBlockBtn');
+    btn.className = `btn ${newStatus==='blocked'?'btn-danger':'btn-success'}`;
+    btn.textContent = `${action} Card`;
+    pendingBlock = { cardId, newStatus };
+    document.getElementById('blockConfirmModal').classList.add('open');
+}
+
+document.getElementById('confirmBlockBtn').addEventListener('click', async () => {
+    if (!pendingBlock) return;
+    const { cardId, newStatus } = pendingBlock;
+    try {
+        const res = await fetch(`${API}/credit-cards/${cardId}/status`, {
+            method: 'PUT',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ status: newStatus })
+        });
+        if (res.ok) {
+            document.getElementById('blockConfirmModal').classList.remove('open');
+            document.getElementById('cardModal').classList.remove('open');
+            loadCards(currentPage);
+            loadStats();
+        }
+    } catch(err) { console.error(err); }
+    pendingBlock = null;
+});
+
+// ----------------------------------------
+// NEW CARD
+// ----------------------------------------
+document.getElementById('addCardBtn').addEventListener('click', () => {
+    document.getElementById('newCardError').classList.add('d-none');
+    document.getElementById('newCardSuccess').classList.add('d-none');
+    document.getElementById('ncCustomerId').value = '';
+    document.getElementById('newCardModal').classList.add('open');
+});
+
+document.getElementById('saveNewCardBtn').addEventListener('click', async () => {
+    const customerId  = document.getElementById('ncCustomerId').value.trim();
+    const cardType    = document.getElementById('ncCardType').value;
+    const creditLimit = document.getElementById('ncCreditLimit').value;
+    const errDiv = document.getElementById('newCardError');
+    const sucDiv = document.getElementById('newCardSuccess');
+
+    errDiv.classList.add('d-none');
+    sucDiv.classList.add('d-none');
+
+    if (!customerId) { errDiv.textContent='Customer ID is required.'; errDiv.classList.remove('d-none'); return; }
+
+    try {
+        const res = await fetch(`${API}/credit-cards`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ customer_id: parseInt(customerId), card_type: cardType, credit_limit: parseFloat(creditLimit) })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            sucDiv.textContent = `${cardType} card issued successfully — ${data.card_number_masked}`;
+            sucDiv.classList.remove('d-none');
+            setTimeout(() => {
+                document.getElementById('newCardModal').classList.remove('open');
+                loadCards(currentPage);
+                loadStats();
+            }, 1200);
+        } else {
+            errDiv.textContent = data.error || 'Failed to issue card.';
+            errDiv.classList.remove('d-none');
+        }
+    } catch(err) {
+        errDiv.textContent = 'Server error. Please try again.';
+        errDiv.classList.remove('d-none');
+    }
+});
+
+// ----------------------------------------
+// CLOSE MODALS
+// ----------------------------------------
+['closeCardModal','closePaymentModal','cancelPaymentModal',
+ 'closeNewCardModal','cancelNewCardModal',
+ 'closeBlockConfirmModal','cancelBlockConfirmModal'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', () => {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+    });
+});
+document.querySelectorAll('.modal-overlay').forEach(o =>
+    o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
+
+// ----------------------------------------
+// FILTERS
+// ----------------------------------------
+document.getElementById('statusFilter').addEventListener('change', function() { currentStatus=this.value; currentPage=1; loadCards(1); });
+document.getElementById('typeFilter').addEventListener('change', function()   { currentType=this.value;   currentPage=1; loadCards(1); });
+document.getElementById('rowsPerPage').addEventListener('change', function()  { limit=parseInt(this.value); currentPage=1; loadCards(1); });
+
+// ----------------------------------------
+// INIT
+// ----------------------------------------
+loadStats();
+loadCards();
+</script>
+<script src="js/sidebar.js"></script>
+</body>
+</html>

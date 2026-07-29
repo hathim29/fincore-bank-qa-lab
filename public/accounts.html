@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinCore Bank — Accounts</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        .badge-active   { background:#DCFCE7; color:#15803D; }
+        .badge-frozen   { background:#FEF9C3; color:#854D0E; }
+        .badge-closed   { background:#FEE2E2; color:#B91C1C; }
+        .badge-verified { background:#DCFCE7; color:#15803D; }
+        .badge-pending  { background:#FEF3C7; color:#D97706; }
+        .badge-rejected { background:#FEE2E2; color:#B91C1C; }
+        .badge-savings  { background:#DBEAFE; color:#1D4ED8; }
+        .badge-current  { background:#EDE9FE; color:#6D28D9; }
+        .badge-salary   { background:#CCFBF1; color:#0F766E; }
+        .badge-success  { background:#DCFCE7; color:#15803D; }
+        .badge-failed   { background:#FEE2E2; color:#B91C1C; }
+        .badge-deposit  { background:#DCFCE7; color:#15803D; }
+        .badge-withdrawal { background:#FEE2E2; color:#B91C1C; }
+        .badge-transfer { background:#DBEAFE; color:#1D4ED8; }
+        .balance-positive { color:#15803D; font-weight:600; }
+        .balance-negative { color:#B91C1C; font-weight:600; }
+        .balance-zero     { color:var(--text-muted); font-weight:600; }
+        .audit-entry { padding:10px 14px; border-left:3px solid var(--border-color); margin-bottom:10px; background:#fafbfc; border-radius:0 6px 6px 0; }
+        .audit-entry.frozen { border-left-color:#D97706; }
+        .audit-entry.active { border-left-color:#15803D; }
+        .audit-entry.closed { border-left-color:#B91C1C; }
+        .char-count { font-size:11px; color:var(--text-muted); text-align:right; margin-top:4px; }
+        .char-count.near-limit { color:var(--amber); }
+        .char-count.at-limit   { color:var(--red); }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <aside class="sidebar" data-testid="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">F</div>
+            <div><div class="logo-text">FinCore Bank</div><div class="logo-sub">QA Practice Lab</div></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <a href="dashboard.html" class="nav-item" data-testid="nav-dashboard"><i class="ti ti-layout-dashboard nav-icon"></i><span>Dashboard</span></a>
+            <a href="accounts.html" class="nav-item active" data-testid="nav-accounts"><i class="ti ti-building-bank nav-icon"></i><span>Accounts</span></a>
+            <a href="transactions.html" class="nav-item" data-testid="nav-transactions"><i class="ti ti-arrows-exchange nav-icon"></i><span>Transactions</span></a>
+            <div class="nav-section-label">Products</div>
+            <a href="customers.html" class="nav-item" data-testid="nav-customers"><i class="ti ti-users nav-icon"></i><span>Customers</span></a>
+            <a href="loans.html" class="nav-item" data-testid="nav-loans"><i class="ti ti-receipt nav-icon"></i><span>Loans</span></a>
+            <a href="credit-cards.html" class="nav-item" data-testid="nav-credit-cards"><i class="ti ti-credit-card nav-icon"></i><span>Credit Cards</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="login.html" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <div><div class="page-title">Accounts</div><div class="page-subtitle">View and manage all customer bank accounts</div></div>
+            </div>
+            <div class="topbar-right">
+                <span id="topbarUser" style="font-size:12px;color:var(--text-muted);"></span>
+                <div class="topbar-avatar" id="topbarAvatar">A</div>
+            </div>
+        </header>
+
+        <div class="page-body">
+            <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);" data-testid="accounts-stat-grid">
+                <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-building-bank"></i></div><div><div class="stat-value" id="statTotal" data-testid="stat-total-accounts">—</div><div class="stat-label">Total Accounts</div></div></div>
+                <div class="stat-card"><div class="stat-icon green"><i class="ti ti-circle-check"></i></div><div><div class="stat-value" id="statActive" data-testid="stat-active-accounts">—</div><div class="stat-label">Active</div></div></div>
+                <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-lock"></i></div><div><div class="stat-value" id="statFrozen" data-testid="stat-frozen-accounts">—</div><div class="stat-label">Frozen</div></div></div>
+                <div class="stat-card"><div class="stat-icon red"><i class="ti ti-x"></i></div><div><div class="stat-value" id="statClosed" data-testid="stat-closed-accounts">—</div><div class="stat-label">Closed</div></div></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="filters-row" style="margin-bottom:0;flex:1;">
+                        <select class="filter-select" id="typeFilter" data-testid="type-filter">
+                            <option value="">All Account Types</option>
+                            <option value="savings">Savings</option>
+                            <option value="current">Current</option>
+                            <option value="salary">Salary</option>
+                        </select>
+                        <select class="filter-select" id="statusFilter" data-testid="status-filter">
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="frozen">Frozen</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                        <select class="filter-select" id="rowsPerPage" data-testid="rows-per-page">
+                            <option value="10">10 rows</option>
+                            <option value="25">25 rows</option>
+                            <option value="50">50 rows</option>
+                        </select>
+                        <span class="total-count" id="totalCount" data-testid="total-count"></span>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table data-testid="accounts-table">
+                        <thead>
+                            <tr><th>Account No.</th><th>Customer</th><th>Type</th><th>Balance</th><th>KYC</th><th>Status</th><th>Opened</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="accountsBody" data-testid="accounts-body">
+                            <tr class="loading-row"><td colspan="8">Loading accounts...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination-row">
+                    <span class="page-info" id="pageInfo" data-testid="page-info"></span>
+                    <div class="pagination" id="pagination" data-testid="pagination"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW ACCOUNT POPUP -->
+<div class="modal-overlay" id="viewAccountModal" data-testid="view-account-modal">
+    <div class="modal-panel wide">
+        <div class="modal-header">
+            <span class="modal-title" id="viewModalTitle">Account Details</span>
+            <button class="modal-close" id="closeViewModal">✕</button>
+        </div>
+        <div class="modal-body" id="viewModalBody"><p class="text-muted" style="text-align:center;padding:24px;">Loading...</p></div>
+        <div class="modal-footer" id="viewModalFooter"></div>
+    </div>
+</div>
+
+<!-- CONFIRM ACTION MODAL -->
+<div class="modal-overlay" id="statusConfirmModal" data-testid="status-confirm-modal">
+    <div class="modal-panel" style="width:480px;">
+        <div class="modal-header">
+            <span class="modal-title" id="confirmTitle">Confirm Action</span>
+            <button class="modal-close" id="closeConfirmModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <p id="confirmMessage" style="font-size:14px;color:var(--text-primary);margin-bottom:16px;"></p>
+            <div class="form-group">
+                <label class="form-label">Reason <span style="color:var(--text-muted);font-weight:400;">(required · max 1000 characters)</span></label>
+                <textarea class="form-control" id="actionReason" data-testid="action-reason"
+                          placeholder="Enter reason for this action..." rows="4" maxlength="1000"
+                          style="resize:vertical;min-height:80px;"></textarea>
+                <div class="char-count" id="charCount">0 / 1000</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" id="cancelConfirmBtn">Cancel</button>
+            <button class="btn btn-danger" id="confirmActionBtn" data-testid="confirm-action-btn" disabled>Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = 'http://localhost:3000/api';
+const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
+if (!user.username) window.location.href = 'login.html';
+document.getElementById('topbarUser').textContent = user.username || '';
+document.getElementById('topbarAvatar').textContent = (user.username || 'A')[0].toUpperCase();
+
+let currentPage=1, currentType='', currentStatus='', limit=10, pendingStatusChange=null;
+
+function fmtDate(d) { return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtDateTime(d) { return fmtDate(d)+' '+new Date(d).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}); }
+function fmtAmt(n) { return '₹'+parseFloat(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function balClass(n) { const v=parseFloat(n); return v>0?'balance-positive':v<0?'balance-negative':'balance-zero'; }
+function badge(cls,text) { return `<span class="badge badge-${cls}">${text}</span>`; }
+function statusBadge(s) { return badge(s,s); }
+function kycBadge(s) { const m={verified:'verified',pending:'pending',rejected:'rejected'}; return badge(m[s]||'secondary',s); }
+function typeBadge(t) { return badge(t,t); }
+
+async function loadStats() {
+    try {
+        const [tot,act,frz,cls] = await Promise.all([
+            fetch(`${API}/accounts?limit=1`).then(r=>r.json()),
+            fetch(`${API}/accounts?limit=1&status=active`).then(r=>r.json()),
+            fetch(`${API}/accounts?limit=1&status=frozen`).then(r=>r.json()),
+            fetch(`${API}/accounts?limit=1&status=closed`).then(r=>r.json()),
+        ]);
+        document.getElementById('statTotal').textContent  = tot.total;
+        document.getElementById('statActive').textContent = act.total;
+        document.getElementById('statFrozen').textContent = frz.total;
+        document.getElementById('statClosed').textContent = cls.total;
+    } catch(e){console.error(e);}
+}
+
+async function loadAccounts(page=1) {
+    const tbody = document.getElementById('accountsBody');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="8">Loading...</td></tr>';
+    try {
+        const p = new URLSearchParams({page,limit});
+        if (currentType) p.append('account_type',currentType);
+        if (currentStatus) p.append('status',currentStatus);
+        const res  = await fetch(`${API}/accounts?${p}`);
+        const data = await res.json();
+        document.getElementById('totalCount').textContent = `${data.total} account${data.total!==1?'s':''} found`;
+        document.getElementById('pageInfo').textContent   = `Page ${page} of ${Math.ceil(data.total/limit)||1}`;
+        if (!data.data.length) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">No accounts found</td></tr>';
+            renderPagination(0,page); return;
+        }
+        tbody.innerHTML = data.data.map(a => `
+            <tr data-testid="account-row-${a.id}" onclick="viewAccount(${a.id})">
+                <td style="font-family:monospace;font-size:13px;font-weight:600;">${a.account_number}</td>
+                <td><div class="fw-600">${a.customer_name}</div><div class="text-muted">${a.customer_email}</div></td>
+                <td>${typeBadge(a.account_type)}</td>
+                <td class="${balClass(a.balance)}">${fmtAmt(a.balance)}</td>
+                <td>${kycBadge(a.kyc_status)}</td>
+                <td>${statusBadge(a.status)}</td>
+                <td class="text-muted">${fmtDate(a.opened_at)}</td>
+                <td onclick="event.stopPropagation()" style="white-space:nowrap;">
+                    <button class="btn btn-outline btn-sm" title="View" onclick="viewAccount(${a.id})"><i class="ti ti-eye"></i></button>
+                    ${user.role==='admin' ? `
+                    <button class="btn btn-outline btn-sm" title="${a.status==='frozen'?'Unfreeze':'Freeze'}"
+                            onclick="promptStatusChange(${a.id},'${a.status==='frozen'?'active':'frozen'}','${a.account_number}')"
+                            style="margin-left:4px;${a.status==='frozen'?'color:var(--green);border-color:var(--green);':'color:var(--amber);border-color:var(--amber);'}">
+                        <i class="ti ti-${a.status==='frozen'?'lock-open':'lock'}"></i>
+                    </button>` : ''}
+                </td>
+            </tr>`).join('');
+        renderPagination(data.total,page);
+    } catch(err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--red);">Error: ${err.message}</td></tr>`;
+    }
+}
+
+function renderPagination(total,page) {
+    const tp = Math.ceil(total/limit)||1;
+    const pg = document.getElementById('pagination');
+    pg.innerHTML='';
+    const btn = (lbl,p,dis,act,tid) => {
+        const b=document.createElement('button');
+        b.className='page-btn'+(act?' active':''); b.textContent=lbl; b.disabled=dis;
+        b.setAttribute('data-testid',tid);
+        b.addEventListener('click',()=>{currentPage=p;loadAccounts(p);});
+        pg.appendChild(b);
+    };
+    btn('←',page-1,page===1,false,'prev-page');
+    for(let i=Math.max(1,page-2);i<=Math.min(tp,page+2);i++) btn(String(i),i,false,i===page,`page-${i}`);
+    btn('→',page+1,page===tp,false,'next-page');
+    btn('»',tp,page===tp,false,'last-page');
+}
+
+async function viewAccount(id) {
+    const modal=document.getElementById('viewAccountModal');
+    const body=document.getElementById('viewModalBody');
+    const footer=document.getElementById('viewModalFooter');
+    body.innerHTML='<p class="text-muted" style="text-align:center;padding:32px;">Loading...</p>';
+    footer.innerHTML=''; modal.classList.add('open');
+    try {
+        const [ar,auditR] = await Promise.all([
+            fetch(`${API}/accounts/${id}`),
+            fetch(`${API}/accounts/${id}/audit`)
+        ]);
+        const a=await ar.json(), audit=await auditR.json();
+        document.getElementById('viewModalTitle').innerHTML =
+            `<i class="ti ti-building-bank"></i>&nbsp;${a.account_number}&nbsp;${typeBadge(a.account_type)}&nbsp;${statusBadge(a.status)}`;
+        body.innerHTML = `
+            <div class="detail-section">
+                <div class="detail-section-title">Account Information</div>
+                <div class="detail-grid">
+                    <div class="detail-item"><label>Account Number</label><span style="font-family:monospace;font-size:15px;font-weight:700;">${a.account_number}</span></div>
+                    <div class="detail-item"><label>Account Type</label><span>${typeBadge(a.account_type)}</span></div>
+                    <div class="detail-item"><label>Current Balance</label><span class="${balClass(a.balance)}" style="font-size:22px;">${fmtAmt(a.balance)}</span></div>
+                    <div class="detail-item"><label>Status</label><span>${statusBadge(a.status)}</span></div>
+                    <div class="detail-item"><label>Date Opened</label><span>${fmtDate(a.opened_at)}</span></div>
+                </div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-section-title">Customer Information</div>
+                <div class="detail-grid">
+                    <div class="detail-item"><label>Name</label><span>${a.customer_name}</span></div>
+                    <div class="detail-item"><label>Email</label><span>${a.customer_email}</span></div>
+                    <div class="detail-item"><label>Phone</label><span>${a.customer_phone||'—'}</span></div>
+                    <div class="detail-item"><label>City</label><span>${a.customer_city||'—'}</span></div>
+                    <div class="detail-item"><label>KYC Status</label><span>${kycBadge(a.kyc_status)}</span></div>
+                </div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-section-title">Recent Transactions (Last 10)</div>
+                ${a.recent_transactions?.length ? `
+                <div class="table-wrap"><table data-testid="account-txn-table">
+                    <thead><tr><th>Date & Time</th><th>Type</th><th>Channel</th><th>Amount</th><th>Balance After</th><th>Status</th><th>Reference</th></tr></thead>
+                    <tbody>
+                    ${a.recent_transactions.map(t=>`
+                        <tr>
+                            <td class="text-muted" style="font-size:12px;white-space:nowrap;">${fmtDate(t.created_at)}<br>${new Date(t.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</td>
+                            <td>${badge(t.transaction_type,t.transaction_type)}</td>
+                            <td style="font-size:12px;">${t.channel}</td>
+                            <td class="${t.transaction_type==='deposit'?'balance-positive':'balance-negative'}" style="font-weight:600;">${t.transaction_type==='deposit'?'+':'-'}${fmtAmt(t.amount)}</td>
+                            <td class="${balClass(t.balance_after)}">${fmtAmt(t.balance_after)}</td>
+                            <td>${statusBadge(t.status)}</td>
+                            <td class="text-muted" style="font-size:11px;font-family:monospace;">${t.reference_number}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table></div>` : '<p class="text-muted fs-12" style="padding:8px 0;">No transactions found</p>'}
+            </div>
+            <div class="detail-section">
+                <div class="detail-section-title">Account Audit Trail</div>
+                ${audit.length ? audit.map(e=>`
+                    <div class="audit-entry ${e.action}" data-testid="audit-entry">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <div><span style="font-size:12px;font-weight:600;color:var(--text-primary);">${e.previous_status} → ${e.action}</span>&nbsp;${statusBadge(e.action)}</div>
+                            <span class="text-muted" style="font-size:11px;">${fmtDateTime(e.performed_at)}</span>
+                        </div>
+                        <div style="font-size:12px;color:var(--text-secondary);">By: <strong>${e.performed_by}</strong>${e.reason?`&nbsp;·&nbsp;<em>${e.reason}</em>`:''}</div>
+                    </div>`).join('') : '<p class="text-muted fs-12" style="padding:8px 0;">No status changes recorded</p>'}
+            </div>`;
+
+        if (user.role==='admin') {
+            footer.innerHTML = `
+                <button class="btn btn-outline" onclick="document.getElementById('viewAccountModal').classList.remove('open')">Close</button>
+                ${a.status==='active'?`<button class="btn btn-outline" style="color:var(--amber);border-color:var(--amber);" onclick="promptStatusChange(${a.id},'frozen','${a.account_number}',true)" data-testid="freeze-btn"><i class="ti ti-lock"></i> Freeze Account</button>`:''}
+                ${a.status==='frozen'?`<button class="btn btn-success" onclick="promptStatusChange(${a.id},'active','${a.account_number}',true)" data-testid="unfreeze-btn"><i class="ti ti-lock-open"></i> Unfreeze Account</button>`:''}
+                ${a.status!=='closed'?`<button class="btn btn-danger" onclick="promptStatusChange(${a.id},'closed','${a.account_number}',true)" data-testid="close-account-btn"><i class="ti ti-x"></i> Close Account</button>`:''}`;
+        } else {
+            footer.innerHTML = `<button class="btn btn-outline" onclick="document.getElementById('viewAccountModal').classList.remove('open')">Close</button>`;
+        }
+    } catch(err) {
+        body.innerHTML = `<p style="color:var(--red);text-align:center;padding:24px;">Error: ${err.message}</p>`;
+    }
+}
+
+function promptStatusChange(accountId, newStatus, accountNumber, fromModal=false) {
+    const msgs = {
+        frozen:`You are about to freeze account ${accountNumber}. All transactions will be blocked until unfrozen.`,
+        active:`You are about to unfreeze account ${accountNumber}. It will be restored to active status.`,
+        closed:`You are about to permanently close account ${accountNumber}. This cannot be reversed.`
+    };
+    const titles={frozen:'Freeze Account',active:'Unfreeze Account',closed:'Close Account'};
+    const btnCls={frozen:'btn-danger',active:'btn-success',closed:'btn-danger'};
+    document.getElementById('confirmTitle').textContent   = titles[newStatus];
+    document.getElementById('confirmMessage').textContent = msgs[newStatus];
+    document.getElementById('actionReason').value = '';
+    document.getElementById('charCount').textContent = '0 / 1000';
+    document.getElementById('charCount').className = 'char-count';
+    const cb = document.getElementById('confirmActionBtn');
+    cb.className=`btn ${btnCls[newStatus]}`; cb.textContent=titles[newStatus]; cb.disabled=true;
+    pendingStatusChange={accountId,newStatus,fromModal};
+    document.getElementById('statusConfirmModal').classList.add('open');
+}
+
+document.getElementById('actionReason').addEventListener('input', function() {
+    const len=this.value.length;
+    const c=document.getElementById('charCount');
+    c.textContent=`${len} / 1000`;
+    c.className=len>=1000?'char-count at-limit':len>=800?'char-count near-limit':'char-count';
+    document.getElementById('confirmActionBtn').disabled=len===0;
+});
+
+document.getElementById('confirmActionBtn').addEventListener('click', async () => {
+    if (!pendingStatusChange) return;
+    const {accountId,newStatus,fromModal}=pendingStatusChange;
+    const reason=document.getElementById('actionReason').value.trim();
+    if (!reason) return;
+    try {
+        const res=await fetch(`${API}/accounts/${accountId}`,{
+            method:'PUT', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({status:newStatus,reason,performed_by:user.username})
+        });
+        if (res.ok) {
+            document.getElementById('statusConfirmModal').classList.remove('open');
+            document.getElementById('viewAccountModal').classList.remove('open');
+            if (fromModal) setTimeout(()=>viewAccount(accountId),200);
+            loadAccounts(currentPage); loadStats();
+        }
+    } catch(e){console.error(e);}
+    pendingStatusChange=null;
+});
+
+document.getElementById('closeViewModal').addEventListener('click',()=>document.getElementById('viewAccountModal').classList.remove('open'));
+document.getElementById('closeConfirmModal').addEventListener('click',()=>document.getElementById('statusConfirmModal').classList.remove('open'));
+document.getElementById('cancelConfirmBtn').addEventListener('click',()=>{document.getElementById('statusConfirmModal').classList.remove('open');pendingStatusChange=null;});
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+document.getElementById('typeFilter').addEventListener('change',function(){currentType=this.value;currentPage=1;loadAccounts(1);});
+document.getElementById('statusFilter').addEventListener('change',function(){currentStatus=this.value;currentPage=1;loadAccounts(1);});
+document.getElementById('rowsPerPage').addEventListener('change',function(){limit=parseInt(this.value);currentPage=1;loadAccounts(1);});
+
+loadStats();
+loadAccounts();
+</script>
+<script src="js/sidebar.js"></script>
+</body>
+</html>

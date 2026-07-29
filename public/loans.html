@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinCore Bank — Loans</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        .badge-active     { background:#DCFCE7; color:#15803D; }
+        .badge-closed     { background:#F1F5F9; color:#64748B; }
+        .badge-foreclosed { background:#FEE2E2; color:#B91C1C; }
+        .badge-overdue    { background:#FEF3C7; color:#D97706; }
+        .badge-paid       { background:#DCFCE7; color:#15803D; }
+        .badge-pending    { background:#FEF3C7; color:#D97706; }
+        .badge-success    { background:#DCFCE7; color:#15803D; }
+        .badge-failed     { background:#FEE2E2; color:#B91C1C; }
+        .badge-personal   { background:#DBEAFE; color:#1D4ED8; }
+        .badge-home       { background:#DCFCE7; color:#15803D; }
+        .badge-auto       { background:#EDE9FE; color:#6D28D9; }
+        .badge-education  { background:#CCFBF1; color:#0F766E; }
+        .badge-business   { background:#FEF3C7; color:#D97706; }
+
+        /* LOAN SCORE WIDGET */
+        .score-widget {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            display: flex; align-items: center; gap: 20px;
+        }
+        .score-circle {
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            font-weight: 700; flex-shrink: 0;
+            border: 4px solid;
+        }
+        .score-circle .score-num  { font-size: 20px; line-height: 1; }
+        .score-circle .score-lbl  { font-size: 9px; letter-spacing: 0.5px; margin-top: 2px; }
+        .score-excellent { border-color:#15803D; background:#DCFCE7; color:#15803D; }
+        .score-good      { border-color:#22C55E; background:#F0FDF4; color:#16A34A; }
+        .score-fair      { border-color:#D97706; background:#FEF3C7; color:#D97706; }
+        .score-poor      { border-color:#B91C1C; background:#FEE2E2; color:#B91C1C; }
+        .score-na        { border-color:#94A3B8; background:#F1F5F9; color:#64748B; }
+
+        .score-stats { display: flex; gap: 20px; flex-wrap: wrap; }
+        .score-stat  { text-align: center; }
+        .score-stat .val { font-size: 18px; font-weight: 700; }
+        .score-stat .lbl { font-size: 11px; color: var(--text-muted); }
+
+        /* EMI TABLE */
+        .emi-table tbody tr.emi-paid    { background: #F0FDF4; }
+        .emi-table tbody tr.emi-overdue { background: #FEF2F2; }
+        .emi-table tbody tr.emi-current { background: #EFF6FF; font-weight: 500; }
+
+        /* PROGRESS BAR */
+        .repayment-progress { margin: 8px 0 16px; }
+        .progress-track { height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden; }
+        .progress-fill  { height: 100%; border-radius: 4px; background: var(--blue); transition: width 0.4s; }
+
+        .amt-green { color:#15803D; font-weight:600; }
+        .bal-positive { color:#15803D; font-weight:600; }
+        .bal-zero     { color:var(--text-muted); font-weight:600; }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" data-testid="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">F</div>
+            <div><div class="logo-text">FinCore Bank</div><div class="logo-sub">QA Practice Lab</div></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <a href="dashboard.html" class="nav-item" data-testid="nav-dashboard"><i class="ti ti-layout-dashboard nav-icon"></i><span>Dashboard</span></a>
+            <a href="accounts.html" class="nav-item" data-testid="nav-accounts"><i class="ti ti-building-bank nav-icon"></i><span>Accounts</span></a>
+            <a href="transactions.html" class="nav-item" data-testid="nav-transactions"><i class="ti ti-arrows-exchange nav-icon"></i><span>Transactions</span></a>
+            <div class="nav-section-label">Products</div>
+            <a href="customers.html" class="nav-item" data-testid="nav-customers"><i class="ti ti-users nav-icon"></i><span>Customers</span></a>
+            <a href="loans.html" class="nav-item active" data-testid="nav-loans"><i class="ti ti-receipt nav-icon"></i><span>Loans</span></a>
+            <a href="credit-cards.html" class="nav-item" data-testid="nav-credit-cards"><i class="ti ti-credit-card nav-icon"></i><span>Credit Cards</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="login.html" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <div>
+                    <div class="page-title">Loans</div>
+                    <div class="page-subtitle">Manage loan applications, repayments and lifecycle</div>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <span id="topbarUser" style="font-size:12px;color:var(--text-muted);"></span>
+                <div class="topbar-avatar" id="topbarAvatar">A</div>
+            </div>
+        </header>
+
+        <div class="page-body">
+
+            <!-- STAT CARDS -->
+            <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);" data-testid="loan-stat-grid">
+                <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-receipt"></i></div><div><div class="stat-value" id="statTotal" data-testid="stat-total">—</div><div class="stat-label">Total Loans</div></div></div>
+                <div class="stat-card"><div class="stat-icon green"><i class="ti ti-circle-check"></i></div><div><div class="stat-value" id="statActive" data-testid="stat-active">—</div><div class="stat-label">Active</div></div></div>
+                <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-alert-triangle"></i></div><div><div class="stat-value" id="statOverdue" data-testid="stat-overdue">—</div><div class="stat-label">Overdue</div></div></div>
+                <div class="stat-card"><div class="stat-icon teal"><i class="ti ti-circle-x"></i></div><div><div class="stat-value" id="statClosed" data-testid="stat-closed">—</div><div class="stat-label">Closed</div></div></div>
+                <div class="stat-card"><div class="stat-icon red"><i class="ti ti-ban"></i></div><div><div class="stat-value" id="statForeclosed" data-testid="stat-foreclosed">—</div><div class="stat-label">Foreclosed</div></div></div>
+            </div>
+
+            <!-- TABLE -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="filters-row" style="margin-bottom:0;flex:1;">
+                        <select class="filter-select" id="statusFilter" data-testid="status-filter">
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="overdue">Overdue</option>
+                            <option value="closed">Closed</option>
+                            <option value="foreclosed">Foreclosed</option>
+                        </select>
+                        <select class="filter-select" id="typeFilter" data-testid="type-filter">
+                            <option value="">All Loan Types</option>
+                            <option value="personal">Personal</option>
+                            <option value="home">Home</option>
+                            <option value="auto">Auto</option>
+                            <option value="education">Education</option>
+                            <option value="business">Business</option>
+                        </select>
+                        <select class="filter-select" id="rowsPerPage" data-testid="rows-per-page">
+                            <option value="10">10 rows</option>
+                            <option value="25">25 rows</option>
+                            <option value="50">50 rows</option>
+                        </select>
+                        <span class="total-count" id="totalCount" data-testid="total-count"></span>
+                    </div>
+                    <button class="btn btn-primary" id="addLoanBtn" data-testid="add-loan-btn"
+                            style="margin-left:16px;white-space:nowrap;display:none;">
+                        <i class="ti ti-plus"></i> New Loan
+                    </button>
+                </div>
+
+                <div class="table-wrap">
+                    <table data-testid="loans-table">
+                        <thead>
+                            <tr>
+                                <th>Loan ID</th>
+                                <th>Customer</th>
+                                <th>Type</th>
+                                <th>Principal</th>
+                                <th>Outstanding</th>
+                                <th>EMI / Month</th>
+                                <th>Loan Score</th>
+                                <th>Status</th>
+                                <th>End Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="loansBody" data-testid="loans-body">
+                            <tr class="loading-row"><td colspan="9">Loading loans...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-row">
+                    <span class="page-info" id="pageInfo" data-testid="page-info"></span>
+                    <div class="pagination" id="pagination" data-testid="pagination"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     LOAN DETAIL POPUP
+     ============================================================ -->
+<div class="modal-overlay" id="loanModal" data-testid="loan-modal">
+    <div class="modal-panel" style="width:900px;">
+        <div class="modal-header">
+            <span class="modal-title" id="loanModalTitle">Loan Details</span>
+            <button class="modal-close" id="closeLoanModal">✕</button>
+        </div>
+        <div class="modal-body" id="loanModalBody">
+            <p class="text-muted" style="text-align:center;padding:32px;">Loading...</p>
+        </div>
+        <div class="modal-footer" id="loanModalFooter"></div>
+    </div>
+</div>
+
+<!-- ============================================================
+     NEW LOAN MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="newLoanModal" data-testid="new-loan-modal">
+    <div class="modal-panel" style="width:580px;">
+        <div class="modal-header">
+            <span class="modal-title"><i class="ti ti-plus"></i> Create New Loan</span>
+            <button class="modal-close" id="closeNewLoanModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="newLoanError" class="alert alert-danger d-none"></div>
+            <div id="newLoanSuccess" class="alert alert-success d-none"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Customer ID *</label>
+                    <input type="number" class="form-control" id="nlCustomerId" data-testid="nl-customer-id" placeholder="Enter customer ID">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Loan Type *</label>
+                    <select class="form-control" id="nlLoanType" data-testid="nl-loan-type">
+                        <option value="personal">Personal</option>
+                        <option value="home">Home</option>
+                        <option value="auto">Auto</option>
+                        <option value="education">Education</option>
+                        <option value="business">Business</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Principal Amount (₹) *</label>
+                    <input type="number" class="form-control" id="nlPrincipal" data-testid="nl-principal" placeholder="e.g. 500000" min="1000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Interest Rate (% p.a.) *</label>
+                    <input type="number" class="form-control" id="nlRate" data-testid="nl-rate" placeholder="e.g. 10.5" step="0.1" min="1" max="36">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tenure (months) *</label>
+                    <select class="form-control" id="nlTenure" data-testid="nl-tenure">
+                        <option value="12">12 months (1 year)</option>
+                        <option value="24">24 months (2 years)</option>
+                        <option value="36">36 months (3 years)</option>
+                        <option value="48">48 months (4 years)</option>
+                        <option value="60">60 months (5 years)</option>
+                        <option value="84">84 months (7 years)</option>
+                        <option value="120">120 months (10 years)</option>
+                        <option value="180">180 months (15 years)</option>
+                        <option value="240">240 months (20 years)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="nlStartDate" data-testid="nl-start-date">
+                </div>
+            </div>
+            <div id="emiPreview" style="display:none; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:12px 16px; margin-top:8px;">
+                <span style="font-size:13px;color:#1D4ED8;">Calculated EMI: </span>
+                <span id="emiPreviewAmt" style="font-size:18px;font-weight:700;color:#1D4ED8;"></span>
+                <span style="font-size:12px;color:#60A5FA;"> / month</span>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" id="cancelNewLoanModal">Cancel</button>
+            <button class="btn btn-primary" id="saveNewLoanBtn" data-testid="save-new-loan-btn">
+                <i class="ti ti-check"></i> Create Loan
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     RECORD EMI PAYMENT MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="payEmiModal" data-testid="pay-emi-modal">
+    <div class="modal-panel" style="width:460px;">
+        <div class="modal-header">
+            <span class="modal-title"><i class="ti ti-cash"></i> Record EMI Payment</span>
+            <button class="modal-close" id="closePayEmiModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="payEmiError" class="alert alert-danger d-none"></div>
+            <div id="payEmiSuccess" class="alert alert-success d-none"></div>
+            <input type="hidden" id="payEmiLoanId">
+            <p id="payEmiInfo" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;background:#F8FAFC;padding:10px 12px;border-radius:6px;"></p>
+            <div class="form-group">
+                <label class="form-label">Payment Channel *</label>
+                <select class="form-control" id="payEmiChannel" data-testid="pay-emi-channel">
+                    <option value="auto-debit">Auto-debit</option>
+                    <option value="UPI-GPay">UPI-GPay</option>
+                    <option value="UPI-PhonePe">UPI-PhonePe</option>
+                    <option value="UPI-Paytm">UPI-Paytm</option>
+                    <option value="NEFT">NEFT</option>
+                    <option value="RTGS">RTGS</option>
+                    <option value="IMPS">IMPS</option>
+                    <option value="cash">Cash</option>
+                    <option value="cheque">Cheque</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" id="cancelPayEmiModal">Cancel</button>
+            <button class="btn btn-success" id="confirmPayEmiBtn" data-testid="confirm-pay-emi-btn">
+                <i class="ti ti-check"></i> Record Payment
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     FORECLOSE CONFIRM MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="foreclosureModal" data-testid="foreclosure-modal">
+    <div class="modal-panel" style="width:460px;">
+        <div class="modal-header">
+            <span class="modal-title" style="color:var(--red);"><i class="ti ti-ban"></i> Foreclose Loan</span>
+            <button class="modal-close" id="closeForeclosureModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="foreclosureError" class="alert alert-danger d-none"></div>
+            <p id="foreclosureInfo" style="font-size:14px;color:var(--text-primary);margin-bottom:12px;"></p>
+            <p style="font-size:13px;color:var(--text-secondary);background:#FEF2F2;padding:10px 12px;border-radius:6px;">
+                <i class="ti ti-alert-triangle" style="color:var(--red);"></i>
+                Foreclosing a loan marks it as foreclosed and closes all pending EMIs. This action cannot be undone.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" id="cancelForeclosureModal">Cancel</button>
+            <button class="btn btn-danger" id="confirmForeclosureBtn" data-testid="confirm-foreclosure-btn">
+                <i class="ti ti-ban"></i> Confirm Foreclosure
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = 'http://localhost:3000/api';
+const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
+if (!user.username) window.location.href = 'login.html';
+document.getElementById('topbarUser').textContent = user.username || '';
+document.getElementById('topbarAvatar').textContent = (user.username||'A')[0].toUpperCase();
+
+if (user.role === 'admin') document.getElementById('addLoanBtn').style.display = 'inline-flex';
+
+let currentPage=1, currentStatus='', currentType='', limit=10;
+let currentLoanId = null;
+let currentEmiNumber = null;
+
+// ----------------------------------------
+// HELPERS
+// ----------------------------------------
+function fmtDate(d)     { return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtAmt(n)      { return '₹'+parseFloat(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function badge(cls,txt) { return `<span class="badge badge-${cls}">${txt}</span>`; }
+function statusBadge(s) { return badge(s,s); }
+function typeBadge(t)   { return badge(t,t); }
+
+function scoreClass(score) {
+    if (!score) return 'score-na';
+    if (score >= 750) return 'score-excellent';
+    if (score >= 650) return 'score-good';
+    if (score >= 550) return 'score-fair';
+    return 'score-poor';
+}
+function scoreLabel(score) {
+    if (!score) return 'N/A';
+    if (score >= 750) return 'Excellent';
+    if (score >= 650) return 'Good';
+    if (score >= 550) return 'Fair';
+    return 'Poor';
+}
+
+// ----------------------------------------
+// STATS
+// ----------------------------------------
+async function loadStats() {
+    try {
+        const [tot,act,ovd,cls,frc] = await Promise.all([
+            fetch(`${API}/loans?limit=1`).then(r=>r.json()),
+            fetch(`${API}/loans?limit=1&status=active`).then(r=>r.json()),
+            fetch(`${API}/loans?limit=1&status=overdue`).then(r=>r.json()),
+            fetch(`${API}/loans?limit=1&status=closed`).then(r=>r.json()),
+            fetch(`${API}/loans?limit=1&status=foreclosed`).then(r=>r.json()),
+        ]);
+        document.getElementById('statTotal').textContent      = tot.total;
+        document.getElementById('statActive').textContent     = act.total;
+        document.getElementById('statOverdue').textContent    = ovd.total;
+        document.getElementById('statClosed').textContent     = cls.total;
+        document.getElementById('statForeclosed').textContent = frc.total;
+    } catch(e){ console.error(e); }
+}
+
+// ----------------------------------------
+// LOAD LOANS TABLE
+// ----------------------------------------
+async function loadLoans(page=1) {
+    const tbody = document.getElementById('loansBody');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="9">Loading...</td></tr>';
+    try {
+        const p = new URLSearchParams({page, limit});
+        if (currentStatus) p.append('status', currentStatus);
+        if (currentType)   p.append('loan_type', currentType);
+
+        const res  = await fetch(`${API}/loans?${p}`);
+        const data = await res.json();
+
+        document.getElementById('totalCount').textContent = `${data.total} loan${data.total!==1?'s':''} found`;
+        document.getElementById('pageInfo').textContent   = `Page ${page} of ${Math.ceil(data.total/limit)||1}`;
+
+        if (!data.data.length) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text-muted);">No loans found</td></tr>';
+            renderPagination(0,page); return;
+        }
+
+        tbody.innerHTML = data.data.map(l => {
+            const score = l.loan_score;
+            const scoreHtml = score
+                ? `<span class="badge ${scoreClass(score)}" style="font-size:12px;">${score} · ${scoreLabel(score)}</span>`
+                : `<span class="text-muted fs-12">—</span>`;
+
+            return `
+            <tr data-testid="loan-row-${l.id}" onclick="viewLoan(${l.id})">
+                <td class="text-muted" style="font-family:monospace;font-size:12px;">#${l.id}</td>
+                <td>
+                    <div class="fw-600">${l.customer_name}</div>
+                    <div class="text-muted">${l.customer_email||''}</div>
+                </td>
+                <td>${typeBadge(l.loan_type)}</td>
+                <td class="fw-600">${fmtAmt(l.principal_amount)}</td>
+                <td class="amt-green">${fmtAmt(l.outstanding_balance)}</td>
+                <td>${fmtAmt(l.emi_amount)}</td>
+                <td>${scoreHtml}</td>
+                <td>${statusBadge(l.status)}</td>
+                <td class="text-muted" style="font-size:12px;">${fmtDate(l.end_date)}</td>
+            </tr>`;
+        }).join('');
+
+        renderPagination(data.total, page);
+    } catch(err) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--red);">Error: ${err.message}</td></tr>`;
+    }
+}
+
+// ----------------------------------------
+// PAGINATION
+// ----------------------------------------
+function renderPagination(total, page) {
+    const tp = Math.ceil(total/limit)||1;
+    const pg = document.getElementById('pagination');
+    pg.innerHTML = '';
+    const btn = (lbl,p,dis,act,tid) => {
+        const b=document.createElement('button');
+        b.className='page-btn'+(act?' active':'');
+        b.textContent=lbl; b.disabled=dis;
+        b.setAttribute('data-testid',tid);
+        b.addEventListener('click',()=>{currentPage=p;loadLoans(p);});
+        pg.appendChild(b);
+    };
+    btn('←',page-1,page===1,false,'prev-page');
+    for(let i=Math.max(1,page-2);i<=Math.min(tp,page+2);i++) btn(String(i),i,false,i===page,`page-${i}`);
+    btn('→',page+1,page===tp,false,'next-page');
+    btn('»',tp,page===tp,false,'last-page');
+}
+
+// ----------------------------------------
+// VIEW LOAN POPUP
+// ----------------------------------------
+async function viewLoan(id) {
+    currentLoanId = id;
+    const modal  = document.getElementById('loanModal');
+    const body   = document.getElementById('loanModalBody');
+    const footer = document.getElementById('loanModalFooter');
+    body.innerHTML = '<p class="text-muted" style="text-align:center;padding:32px;">Loading...</p>';
+    footer.innerHTML = '';
+    modal.classList.add('open');
+
+    try {
+        const res  = await fetch(`${API}/loans/${id}`);
+        const loan = await res.json();
+
+        const score = loan.loan_score;
+        const paidCount = loan.repayment_history?.filter(r=>r.status==='paid').length || 0;
+        const totalCount = loan.repayment_history?.length || 0;
+        const progress = totalCount > 0 ? Math.round((paidCount/totalCount)*100) : 0;
+        const allPaid = loan.repayment_history?.every(r=>r.status==='paid');
+        const currentEMI = loan.current_emi;
+
+        // Only the single next payable EMI gets a Pay button
+        // — first overdue (lowest number), or first pending if no overdue
+        const nextPayable = loan.repayment_history?.find(r => r.status === 'overdue') ||
+                            loan.repayment_history?.find(r => r.status === 'pending') ||
+                            null;
+        const nextPayableNum = nextPayable?.emi_number || null;
+
+        document.getElementById('loanModalTitle').innerHTML =
+            `<i class="ti ti-receipt"></i>&nbsp; Loan #${loan.id}&nbsp; ${typeBadge(loan.loan_type)}&nbsp; ${statusBadge(loan.status)}`;
+
+        body.innerHTML = `
+            <!-- LOAN DETAILS -->
+            <div class="detail-section">
+                <div class="detail-section-title">Loan Information</div>
+                <div class="detail-grid">
+                    <div class="detail-item"><label>Customer</label><span class="fw-600">${loan.customer_name}</span></div>
+                    <div class="detail-item"><label>Account Number</label><span style="font-family:monospace;">${loan.account_number||'—'}</span></div>
+                    <div class="detail-item"><label>Principal Amount</label><span class="fw-600" style="font-size:18px;">${fmtAmt(loan.principal_amount)}</span></div>
+                    <div class="detail-item"><label>Outstanding Balance</label><span class="amt-green" style="font-size:18px;">${fmtAmt(loan.outstanding_balance)}</span></div>
+                    <div class="detail-item"><label>Interest Rate</label><span>${loan.interest_rate}% p.a.</span></div>
+                    <div class="detail-item"><label>Tenure</label><span>${loan.tenure_months} months</span></div>
+                    <div class="detail-item"><label>EMI Amount</label><span class="fw-600">${fmtAmt(loan.emi_amount)} / month</span></div>
+                    <div class="detail-item"><label>Status</label><span>${statusBadge(loan.status)}</span></div>
+                    <div class="detail-item"><label>Start Date</label><span>${fmtDate(loan.start_date)}</span></div>
+                    <div class="detail-item"><label>End Date</label><span>${fmtDate(loan.end_date)}</span></div>
+                </div>
+            </div>
+
+            <!-- CURRENT EMI STATUS -->
+            <div class="detail-section">
+                <div class="detail-section-title">Current EMI Status</div>
+                ${(() => {
+                    const overdueList = loan.repayment_history?.filter(r => r.status === 'overdue') || [];
+                    const nextPending = loan.repayment_history?.find(r => r.status === 'pending') || null;
+                    if (!overdueList.length && !nextPending) {
+                        return `<p class="text-muted fs-12" style="padding:8px 0;">${loan.status==='active'?'All EMIs up to date — no pending or overdue EMIs':'No pending EMIs'}</p>`;
+                    }
+                    let html = '';
+                    if (overdueList.length) {
+                        html += `<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:10px 14px;margin-bottom:8px;">
+                            <div style="font-size:12px;font-weight:600;color:#B91C1C;margin-bottom:6px;">
+                                <i class="ti ti-alert-triangle"></i> ${overdueList.length} Overdue EMI${overdueList.length>1?'s':''}
+                            </div>`;
+                        overdueList.forEach(emi => {
+                            const isNextPayable = emi.emi_number === nextPayableNum;
+                            html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid #FECACA;">
+                                <span style="font-size:13px;">EMI #${emi.emi_number} — ${fmtAmt(emi.emi_amount)} &nbsp;<span style="color:#B91C1C;font-size:11px;">Due: ${fmtDate(emi.due_date)} (+${emi.days_delayed}d)</span></span>
+                                ${user.role==='admin' && loan.status==='active' && isNextPayable ? `
+                                <button class="btn btn-success btn-sm" onclick="openPayEmi(${loan.id},${emi.emi_number},${emi.emi_amount})" data-testid="pay-overdue-${emi.emi_number}">
+                                    <i class="ti ti-cash"></i> Pay
+                                </button>` : ''}
+                            </div>`;
+                        });
+                        html += `</div>`;
+                    }
+                    if (nextPending) {
+                        html += `<div style="display:flex;align-items:center;gap:16px;padding:10px 14px;background:#F8FAFC;border-radius:8px;border:1px solid var(--border-color);">
+                            <div style="flex:1;">
+                                <div class="fw-600">Next EMI #${nextPending.emi_number} — ${fmtAmt(nextPending.emi_amount)}</div>
+                                <div class="text-muted" style="font-size:12px;">Due: ${fmtDate(nextPending.due_date)}</div>
+                            </div>
+                            <div>${statusBadge(nextPending.status)}</div>
+                            ${user.role==='admin' && loan.status==='active' ? `
+                            <button class="btn btn-success btn-sm" onclick="openPayEmi(${loan.id},${nextPending.emi_number},${nextPending.emi_amount})" data-testid="pay-emi-btn">
+                                <i class="ti ti-cash"></i> Pay EMI
+                            </button>` : ''}
+                        </div>`;
+                    }
+                    return html;
+                })()}
+            </div>
+
+            <!-- LOAN SCORE -->
+            <div class="detail-section">
+                <div class="detail-section-title">Loan Score</div>
+                <div class="score-widget" data-testid="score-widget">
+                    <div class="score-circle ${scoreClass(score)}">
+                        <span class="score-num">${score||'—'}</span>
+                        <span class="score-lbl">${scoreLabel(score)}</span>
+                    </div>
+                    <div>
+                        <div class="score-stats">
+                            <div class="score-stat">
+                                <div class="val" style="color:#15803D;">${loan.on_time_payments||0}</div>
+                                <div class="lbl">On Time</div>
+                            </div>
+                            <div class="score-stat">
+                                <div class="val" style="color:#D97706;">${loan.delayed_payments||0}</div>
+                                <div class="lbl">Delayed</div>
+                            </div>
+                            <div class="score-stat">
+                                <div class="val" style="color:#B91C1C;">${loan.missed_payments||0}</div>
+                                <div class="lbl">Missed</div>
+                            </div>
+                        </div>
+                        <div class="repayment-progress" style="margin-top:12px;min-width:260px;">
+                            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px;">
+                                <span>Repayment Progress</span>
+                                <span>${paidCount} of ${totalCount} EMIs paid (${progress}%)</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width:${progress}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REPAYMENT HISTORY -->
+            <div class="detail-section">
+                <div class="detail-section-title">Repayment History</div>
+                ${loan.repayment_history?.length ? `
+                <div class="table-wrap">
+                    <table class="emi-table" data-testid="repayment-table">
+                        <thead>
+                            <tr><th>EMI #</th><th>Due Date</th><th>Paid Date</th><th>Amount</th><th>Channel</th><th>Days Delayed</th><th>Status</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            ${loan.repayment_history.map(r => `
+                                <tr class="${r.status==='paid'?'emi-paid':r.status==='overdue'?'emi-overdue':r.id===currentEMI?.id?'emi-current':''}"
+                                    data-testid="emi-row-${r.emi_number}">
+                                    <td class="fw-600">${r.emi_number}</td>
+                                    <td style="font-size:12px;">${fmtDate(r.due_date)}</td>
+                                    <td style="font-size:12px;">${r.paid_date?fmtDate(r.paid_date):'—'}</td>
+                                    <td class="fw-600">${fmtAmt(r.emi_amount)}</td>
+                                    <td style="font-size:12px;">${r.payment_channel||'—'}</td>
+                                    <td style="text-align:center;">
+                                        ${r.days_delayed>0?`<span style="color:var(--red);font-size:12px;font-weight:600;">+${r.days_delayed}d</span>`:'<span style="color:var(--green);font-size:12px;">—</span>'}
+                                    </td>
+                                    <td>${statusBadge(r.status)}</td>
+                                    <td>
+                                        ${user.role==='admin' && loan.status==='active' && r.emi_number === nextPayableNum ? `
+                                        <button class="btn btn-success btn-sm" style="white-space:nowrap;"
+                                                onclick="openPayEmi(${loan.id}, ${r.emi_number}, ${r.emi_amount})"
+                                                data-testid="pay-emi-row-${r.emi_number}">
+                                            <i class="ti ti-cash"></i> Pay
+                                        </button>` : ''}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>` : '<p class="text-muted fs-12">No repayment records found</p>'}
+            </div>
+        `;
+
+        // FOOTER ACTIONS
+        if (user.role === 'admin') {
+            let actions = `<button class="btn btn-outline" onclick="document.getElementById('loanModal').classList.remove('open')">Close</button>`;
+
+            if (loan.status === 'active') {
+                actions += `<button class="btn btn-danger" onclick="openForeclosure(${loan.id})" data-testid="foreclose-btn" style="margin-left:8px;">
+                    <i class="ti ti-ban"></i> Foreclose Loan
+                </button>`;
+            }
+
+            if (allPaid && loan.status === 'active') {
+                actions += `<button class="btn btn-success" onclick="closeLoan(${loan.id})" data-testid="close-loan-btn" style="margin-left:8px;">
+                    <i class="ti ti-circle-check"></i> Close Loan
+                </button>`;
+            }
+
+            footer.innerHTML = actions;
+        } else {
+            footer.innerHTML = `<button class="btn btn-outline" onclick="document.getElementById('loanModal').classList.remove('open')">Close</button>`;
+        }
+
+    } catch(err) {
+        body.innerHTML = `<p style="color:var(--red);text-align:center;padding:24px;">Error: ${err.message}</p>`;
+    }
+}
+
+// ----------------------------------------
+// NEW LOAN
+// ----------------------------------------
+document.getElementById('addLoanBtn').addEventListener('click', () => {
+    document.getElementById('newLoanError').classList.add('d-none');
+    document.getElementById('newLoanSuccess').classList.add('d-none');
+    document.getElementById('nlCustomerId').value = '';
+    document.getElementById('nlPrincipal').value  = '';
+    document.getElementById('nlRate').value        = '';
+    document.getElementById('nlStartDate').value   = new Date().toISOString().split('T')[0];
+    document.getElementById('emiPreview').style.display = 'none';
+    document.getElementById('newLoanModal').classList.add('open');
+});
+
+// Live EMI preview
+['nlPrincipal','nlRate','nlTenure'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateEmiPreview);
+});
+document.getElementById('nlTenure').addEventListener('change', updateEmiPreview);
+
+function updateEmiPreview() {
+    const principal = parseFloat(document.getElementById('nlPrincipal').value);
+    const rate      = parseFloat(document.getElementById('nlRate').value);
+    const tenure    = parseInt(document.getElementById('nlTenure').value);
+    const preview   = document.getElementById('emiPreview');
+
+    if (principal > 0 && rate > 0 && tenure > 0) {
+        const mr  = rate / 12 / 100;
+        const emi = (principal * mr * Math.pow(1+mr, tenure)) / (Math.pow(1+mr, tenure) - 1);
+        document.getElementById('emiPreviewAmt').textContent = '₹' + emi.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+document.getElementById('saveNewLoanBtn').addEventListener('click', async () => {
+    const customerId = document.getElementById('nlCustomerId').value.trim();
+    const loanType   = document.getElementById('nlLoanType').value;
+    const principal  = document.getElementById('nlPrincipal').value;
+    const rate       = document.getElementById('nlRate').value;
+    const tenure     = document.getElementById('nlTenure').value;
+    const startDate  = document.getElementById('nlStartDate').value;
+    const errDiv     = document.getElementById('newLoanError');
+    const sucDiv     = document.getElementById('newLoanSuccess');
+
+    errDiv.classList.add('d-none');
+    sucDiv.classList.add('d-none');
+
+    if (!customerId||!principal||!rate) {
+        errDiv.textContent = 'Customer ID, principal amount and interest rate are required.';
+        errDiv.classList.remove('d-none'); return;
+    }
+
+    try {
+        const res = await fetch(`${API}/loans`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+                customer_id: parseInt(customerId),
+                loan_type: loanType,
+                principal_amount: parseFloat(principal),
+                interest_rate: parseFloat(rate),
+                tenure_months: parseInt(tenure),
+                start_date: startDate
+            })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            sucDiv.textContent = `Loan #${data.id} created successfully. EMI: ₹${parseFloat(data.emi_amount).toLocaleString('en-IN',{minimumFractionDigits:2})} / month`;
+            sucDiv.classList.remove('d-none');
+            setTimeout(() => {
+                document.getElementById('newLoanModal').classList.remove('open');
+                loadLoans(currentPage);
+                loadStats();
+            }, 1500);
+        } else {
+            errDiv.textContent = data.error || 'Failed to create loan.';
+            errDiv.classList.remove('d-none');
+        }
+    } catch(err) {
+        errDiv.textContent = 'Server error. Please try again.';
+        errDiv.classList.remove('d-none');
+    }
+});
+
+// ----------------------------------------
+// PAY EMI
+// ----------------------------------------
+function openPayEmi(loanId, emiNumber, emiAmount) {
+    currentEmiNumber = emiNumber;
+    document.getElementById('payEmiLoanId').value = loanId;
+    document.getElementById('payEmiInfo').innerHTML =
+        `Paying <strong>EMI #${emiNumber}</strong> — Amount: <strong>₹${parseFloat(emiAmount).toLocaleString('en-IN',{minimumFractionDigits:2})}</strong>`;
+    document.getElementById('payEmiError').classList.add('d-none');
+    document.getElementById('payEmiSuccess').classList.add('d-none');
+    document.getElementById('payEmiModal').classList.add('open');
+}
+
+// Remove the old document click listener — no longer needed
+
+document.getElementById('confirmPayEmiBtn').addEventListener('click', async () => {
+    const loanId  = document.getElementById('payEmiLoanId').value;
+    const channel = document.getElementById('payEmiChannel').value;
+    const errDiv  = document.getElementById('payEmiError');
+    const sucDiv  = document.getElementById('payEmiSuccess');
+
+    errDiv.classList.add('d-none');
+    sucDiv.classList.add('d-none');
+
+    try {
+        const res = await fetch(`${API}/loan-repayments`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ loan_id: parseInt(loanId), emi_number: currentEmiNumber, payment_channel: channel })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            sucDiv.textContent = `EMI #${currentEmiNumber} recorded successfully. Reference: ${data.reference_number||'—'}`;
+            sucDiv.classList.remove('d-none');
+            setTimeout(() => {
+                document.getElementById('payEmiModal').classList.remove('open');
+                document.getElementById('loanModal').classList.remove('open');
+                setTimeout(() => viewLoan(loanId), 200);
+                loadStats();
+            }, 1200);
+        } else {
+            errDiv.textContent = data.error || 'Payment failed.';
+            errDiv.classList.remove('d-none');
+        }
+    } catch(err) {
+        errDiv.textContent = 'Server error. Please try again.';
+        errDiv.classList.remove('d-none');
+    }
+});
+
+// ----------------------------------------
+// FORECLOSE LOAN
+// ----------------------------------------
+function openForeclosure(loanId) {
+    document.getElementById('foreclosureInfo').textContent =
+        `You are about to foreclose Loan #${loanId}. The loan will be marked as foreclosed and all remaining EMIs will be cancelled.`;
+    document.getElementById('foreclosureError').classList.add('d-none');
+    document.getElementById('foreclosureModal').classList.add('open');
+    document.getElementById('confirmForeclosureBtn').dataset.loanId = loanId;
+}
+
+document.getElementById('confirmForeclosureBtn').addEventListener('click', async function() {
+    const loanId = this.dataset.loanId;
+    const errDiv = document.getElementById('foreclosureError');
+    errDiv.classList.add('d-none');
+    try {
+        const res = await fetch(`${API}/loans/${loanId}`, {
+            method: 'PUT',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ status: 'foreclosed' })
+        });
+        if (res.ok) {
+            document.getElementById('foreclosureModal').classList.remove('open');
+            document.getElementById('loanModal').classList.remove('open');
+            loadLoans(currentPage);
+            loadStats();
+        } else {
+            const d = await res.json();
+            errDiv.textContent = d.error || 'Foreclosure failed.';
+            errDiv.classList.remove('d-none');
+        }
+    } catch(err) {
+        errDiv.textContent = 'Server error.';
+        errDiv.classList.remove('d-none');
+    }
+});
+
+// ----------------------------------------
+// CLOSE LOAN
+// ----------------------------------------
+async function closeLoan(loanId) {
+    try {
+        const res = await fetch(`${API}/loans/${loanId}`, {
+            method: 'PUT',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ status: 'closed' })
+        });
+        if (res.ok) {
+            document.getElementById('loanModal').classList.remove('open');
+            loadLoans(currentPage);
+            loadStats();
+        }
+    } catch(err) { console.error(err); }
+}
+
+// ----------------------------------------
+// CLOSE MODALS
+// ----------------------------------------
+['closeLoanModal','closeNewLoanModal','cancelNewLoanModal',
+ 'closePayEmiModal','cancelPayEmiModal',
+ 'closeForeclosureModal','cancelForeclosureModal'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', () => {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+    });
+});
+document.querySelectorAll('.modal-overlay').forEach(o =>
+    o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
+
+// ----------------------------------------
+// FILTERS
+// ----------------------------------------
+document.getElementById('statusFilter').addEventListener('change', function() { currentStatus=this.value; currentPage=1; loadLoans(1); });
+document.getElementById('typeFilter').addEventListener('change', function()   { currentType=this.value;   currentPage=1; loadLoans(1); });
+document.getElementById('rowsPerPage').addEventListener('change', function()  { limit=parseInt(this.value); currentPage=1; loadLoans(1); });
+
+// ----------------------------------------
+// INIT
+// ----------------------------------------
+loadStats();
+loadLoans();
+</script>
+<script src="js/sidebar.js"></script>
+</body>
+</html>

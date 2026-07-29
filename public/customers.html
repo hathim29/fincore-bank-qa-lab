@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinCore Bank — Customers</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" data-testid="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">F</div>
+            <div>
+                <div class="logo-text">FinCore Bank</div>
+                <div class="logo-sub">QA Practice Lab</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <a href="dashboard.html" class="nav-item" data-testid="nav-dashboard">
+                <i class="ti ti-layout-dashboard nav-icon"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="accounts.html" class="nav-item" data-testid="nav-accounts">
+                <i class="ti ti-building-bank nav-icon"></i>
+                <span>Accounts</span>
+            </a>
+            <a href="transactions.html" class="nav-item" data-testid="nav-transactions">
+                <i class="ti ti-arrows-exchange nav-icon"></i>
+                <span>Transactions</span>
+            </a>
+            <div class="nav-section-label">Products</div>
+            <a href="customers.html" class="nav-item active" data-testid="nav-customers">
+                <i class="ti ti-users nav-icon"></i>
+                <span>Customers</span>
+            </a>
+            <a href="loans.html" class="nav-item" data-testid="nav-loans">
+                <i class="ti ti-receipt nav-icon"></i>
+                <span>Loans</span>
+            </a>
+            <a href="credit-cards.html" class="nav-item" data-testid="nav-credit-cards">
+                <i class="ti ti-credit-card nav-icon"></i>
+                <span>Credit Cards</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="login.html" class="nav-item" data-testid="logout-button">
+                <i class="ti ti-logout nav-icon"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <div>
+                    <div class="page-title">Customers</div>
+                    <div class="page-subtitle">Manage customer profiles and KYC status</div>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <span id="topbarUser" style="font-size:12px; color:var(--text-muted);"></span>
+                <div class="topbar-avatar" id="topbarAvatar">A</div>
+            </div>
+        </header>
+
+        <div class="page-body">
+            <div class="card">
+
+                <!-- FILTERS -->
+                <div class="card-header">
+                    <div class="filters-row" style="margin-bottom:0; flex:1;">
+                        <input type="text" class="filter-input" id="searchInput"
+                               data-testid="search-input" placeholder="Search by name, email or city...">
+                        <select class="filter-select" id="kycFilter" data-testid="kyc-filter">
+                            <option value="">All KYC Statuses</option>
+                            <option value="verified">Verified</option>
+                            <option value="pending">Pending</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        <select class="filter-select" id="rowsPerPage" data-testid="rows-per-page">
+                            <option value="10">10 rows</option>
+                            <option value="25">25 rows</option>
+                            <option value="50">50 rows</option>
+                        </select>
+                        <span class="total-count" id="totalCount" data-testid="total-count"></span>
+                    </div>
+                    <button class="btn btn-primary" id="addCustomerBtn"
+                            data-testid="add-customer-button" style="margin-left:16px; white-space:nowrap;">
+                        <i class="ti ti-plus"></i> Add Customer
+                    </button>
+                </div>
+
+                <!-- TABLE -->
+                <div class="table-wrap">
+                    <table data-testid="customers-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Customer</th>
+                                <th>Phone</th>
+                                <th>City</th>
+                                <th>KYC Status</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersBody" data-testid="customers-body">
+                            <tr class="loading-row"><td colspan="7">Loading customers...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- PAGINATION -->
+                <div class="pagination-row">
+                    <span class="page-info" id="pageInfo" data-testid="page-info"></span>
+                    <div class="pagination" id="pagination" data-testid="pagination"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     ADD CUSTOMER MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="addCustomerModal" data-testid="add-customer-modal">
+    <div class="modal-panel">
+        <div class="modal-header">
+            <span class="modal-title"><i class="ti ti-user-plus"></i> Add New Customer</span>
+            <button class="modal-close" id="closeAddModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="modalError" class="alert alert-danger d-none"></div>
+            <div id="modalSuccess" class="alert alert-success d-none"></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                <div class="form-group">
+                    <label class="form-label">Full Name *</label>
+                    <input type="text" class="form-control" id="modalName"
+                           data-testid="modal-name" placeholder="Enter full name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address *</label>
+                    <input type="email" class="form-control" id="modalEmail"
+                           data-testid="modal-email" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" class="form-control" id="modalPhone"
+                           data-testid="modal-phone" placeholder="10-digit mobile number">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">City</label>
+                    <input type="text" class="form-control" id="modalCity"
+                           data-testid="modal-city" placeholder="Enter city">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">KYC Status</label>
+                    <select class="form-control" id="modalKyc" data-testid="modal-kyc">
+                        <option value="pending">Pending</option>
+                        <option value="verified">Verified</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" id="cancelAddModal">Cancel</button>
+            <button class="btn btn-primary" id="saveCustomerBtn"
+                    data-testid="save-customer-button">
+                <i class="ti ti-check"></i> Save Customer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     VIEW CUSTOMER POPUP
+     ============================================================ -->
+<div class="modal-overlay" id="viewCustomerModal" data-testid="view-customer-modal">
+    <div class="modal-panel wide">
+        <div class="modal-header">
+            <span class="modal-title" id="viewModalTitle">Customer Details</span>
+            <button class="modal-close" id="closeViewModal">✕</button>
+        </div>
+        <div class="modal-body" id="viewModalBody">
+            <p class="text-muted" style="text-align:center; padding:24px;">Loading...</p>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT CUSTOMER MODAL -->
+<div class="modal-overlay" id="editCustomerModal" data-testid="edit-customer-modal">
+    <div class="modal-panel">
+        <div class="modal-header">
+            <span class="modal-title"><i class="ti ti-pencil"></i> Edit Customer</span>
+            <button class="modal-close" id="closeEditModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="editModalError" class="alert alert-danger d-none"></div>
+            <div id="editModalSuccess" class="alert alert-success d-none"></div>
+            <input type="hidden" id="editCustomerId">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                <div class="form-group">
+                    <label class="form-label">Full Name *</label>
+                    <input type="text" class="form-control" id="editName"
+                           data-testid="edit-name" placeholder="Enter full name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address *</label>
+                    <input type="email" class="form-control" id="editEmail"
+                           data-testid="edit-email" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" class="form-control" id="editPhone"
+                           data-testid="edit-phone" placeholder="10-digit mobile number">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">City</label>
+                    <input type="text" class="form-control" id="editCity"
+                           data-testid="edit-city" placeholder="Enter city">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">KYC Status</label>
+                    <select class="form-control" id="editKyc" data-testid="edit-kyc">
+                        <option value="pending">Pending</option>
+                        <option value="verified">Verified</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" id="cancelEditModal">Cancel</button>
+            <button class="btn btn-primary" id="saveEditBtn" data-testid="save-edit-button">
+                <i class="ti ti-check"></i> Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ADD ACCOUNT MODAL -->
+<div class="modal-overlay" id="addAccountModal" data-testid="add-account-modal">
+    <div class="modal-panel">
+        <div class="modal-header">
+            <span class="modal-title"><i class="ti ti-building-bank"></i> Add Account</span>
+            <button class="modal-close" id="closeAddAccountModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="addAccError" class="alert alert-danger d-none"></div>
+            <div id="addAccSuccess" class="alert alert-success d-none"></div>
+            <input type="hidden" id="addAccCustomerId">
+            <p id="addAccCustomerName" style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;"></p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                <div class="form-group">
+                    <label class="form-label">Account Type *</label>
+                    <select class="form-control" id="addAccType" data-testid="add-acc-type">
+                        <option value="savings">Savings</option>
+                        <option value="current">Current</option>
+                        <option value="salary">Salary</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Opening Balance (₹)</label>
+                    <input type="number" class="form-control" id="addAccBalance"
+                           data-testid="add-acc-balance" placeholder="0.00" min="0">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" id="cancelAddAccountModal">Cancel</button>
+            <button class="btn btn-primary" id="saveAddAccBtn" data-testid="save-add-acc-button">
+                <i class="ti ti-check"></i> Create Account
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:3000/api';
+
+    // Auth check
+    const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
+    if (!user.username) window.location.href = 'login.html';
+    document.getElementById('topbarUser').textContent = user.username || '';
+    document.getElementById('topbarAvatar').textContent = (user.username || 'A')[0].toUpperCase();
+
+    // Hide add button for viewers
+    if (user.role !== 'admin') {
+        document.getElementById('addCustomerBtn').style.display = 'none';
+    }
+
+    let currentPage = 1;
+    let currentSearch = '';
+    let currentKyc = '';
+    let limit = 10;
+
+    function fmt(date) {
+        return new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function kycBadge(status) {
+        const map = { verified: 'success', pending: 'warning', rejected: 'danger' };
+        return `<span class="badge badge-${map[status] || 'secondary'}">${status}</span>`;
+    }
+
+    // ----------------------------------------
+    // LOAD CUSTOMERS
+    // ----------------------------------------
+    async function loadCustomers(page = 1) {
+        const tbody = document.getElementById('customersBody');
+        tbody.innerHTML = '<tr class="loading-row"><td colspan="7">Loading...</td></tr>';
+
+        try {
+            const params = new URLSearchParams({
+                page, limit,
+                search: currentSearch,
+            });
+
+            const res = await fetch(`${API}/customers?${params}`);
+            const data = await res.json();
+
+            document.getElementById('totalCount').textContent = `${data.total} customers found`;
+            document.getElementById('pageInfo').textContent =
+                `Page ${page} of ${Math.ceil(data.total / limit) || 1}`;
+
+            // Client-side KYC filter (API search doesn't filter by kyc)
+            let rows = data.data;
+            if (currentKyc) rows = rows.filter(c => c.kyc_status === currentKyc);
+
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted);">No customers found</td></tr>';
+                renderPagination(data.total, page);
+                return;
+            }
+
+            tbody.innerHTML = rows.map(c => `
+                <tr data-testid="customer-row-${c.id}" onclick="viewCustomer(${c.id})">
+                    <td class="text-muted fs-12">#${c.id}</td>
+                    <td>
+                        <div class="fw-600">${c.name}</div>
+                        <div class="text-muted">${c.email}</div>
+                    </td>
+                    <td>${c.phone || '—'}</td>
+                    <td>${c.city || '—'}</td>
+                    <td>${kycBadge(c.kyc_status)}</td>
+                    <td class="text-muted">${fmt(c.created_at)}</td>
+                    <td onclick="event.stopPropagation()" style="white-space:nowrap;">
+                        <button class="btn btn-outline btn-sm" title="View Details"
+                                onclick="viewCustomer(${c.id})">
+                            <i class="ti ti-eye"></i>
+                        </button>
+                        ${user.role === 'admin' ? `
+                        <button class="btn btn-outline btn-sm" title="Edit Customer"
+                                onclick="editCustomer(${c.id}, '${c.name}', '${c.email}', '${c.phone || ''}', '${c.city || ''}', '${c.kyc_status}')"
+                                style="margin-left:4px;">
+                            <i class="ti ti-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline btn-sm" title="Add Account"
+                                onclick="addAccountForCustomer(${c.id}, '${c.name}')"
+                                style="margin-left:4px;">
+                            <i class="ti ti-building-bank"></i>
+                        </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+
+            renderPagination(data.total, page);
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--red);">Error loading customers: ${err.message}</td></tr>`;
+        }
+    }
+
+    // ----------------------------------------
+    // PAGINATION
+    // ----------------------------------------
+    function renderPagination(total, page) {
+        const totalPages = Math.ceil(total / limit) || 1;
+        const pg = document.getElementById('pagination');
+        pg.innerHTML = '';
+
+        const addBtn = (label, p, disabled, active) => {
+            const btn = document.createElement('button');
+            btn.className = 'page-btn' + (active ? ' active' : '');
+            btn.textContent = label;
+            btn.disabled = disabled;
+            btn.setAttribute('data-testid', label === '←' ? 'prev-page' : label === '→' ? 'next-page' : label === '»' ? 'last-page' : `page-${p}`);
+            btn.addEventListener('click', () => { currentPage = p; loadCustomers(p); });
+            pg.appendChild(btn);
+        };
+
+        addBtn('←', page - 1, page === 1, false);
+        const start = Math.max(1, page - 2);
+        const end   = Math.min(totalPages, page + 2);
+        for (let i = start; i <= end; i++) addBtn(String(i), i, false, i === page);
+        addBtn('→', page + 1, page === totalPages, false);
+        addBtn('»', totalPages, page === totalPages, false);
+    }
+
+    // ----------------------------------------
+    // VIEW CUSTOMER POPUP
+    // ----------------------------------------
+    async function viewCustomer(id) {
+        const modal = document.getElementById('viewCustomerModal');
+        const body  = document.getElementById('viewModalBody');
+        body.innerHTML = '<p class="text-muted" style="text-align:center;padding:32px;">Loading...</p>';
+        modal.classList.add('open');
+
+        try {
+            const res = await fetch(`${API}/customers/${id}`);
+            const c = await res.json();
+
+            document.getElementById('viewModalTitle').textContent = `${c.name} · #${c.id}`;
+
+            body.innerHTML = `
+                <div class="detail-section">
+                    <div class="detail-section-title">Customer Information</div>
+                    <div class="detail-grid">
+                        <div class="detail-item"><label>Full Name</label><span>${c.name}</span></div>
+                        <div class="detail-item"><label>Email</label><span>${c.email}</span></div>
+                        <div class="detail-item"><label>Phone</label><span>${c.phone || '—'}</span></div>
+                        <div class="detail-item"><label>City</label><span>${c.city || '—'}</span></div>
+                        <div class="detail-item"><label>KYC Status</label><span>${kycBadge(c.kyc_status)}</span></div>
+                        <div class="detail-item"><label>Customer Since</label><span>${fmt(c.created_at)}</span></div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Accounts (${c.accounts?.length || 0})</div>
+                    ${c.accounts?.length ? `
+                        <table>
+                            <thead>
+                                <tr><th>Account No.</th><th>Type</th><th>Balance</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                ${c.accounts.map(a => `
+                                    <tr>
+                                        <td class="fw-600">${a.account_number}</td>
+                                        <td>${a.account_type}</td>
+                                        <td class="fw-600">₹${parseFloat(a.balance).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                                        <td><span class="badge badge-${a.status}">${a.status}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<p class="text-muted fs-12">No accounts found</p>'}
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Loans (${c.loans?.length || 0})</div>
+                    ${c.loans?.length ? `
+                        <table>
+                            <thead>
+                                <tr><th>Loan ID</th><th>Type</th><th>Amount</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                ${c.loans.map(l => `
+                                    <tr>
+                                        <td class="text-muted">#${l.id}</td>
+                                        <td>${l.loan_type}</td>
+                                        <td class="fw-600">₹${parseFloat(l.principal_amount).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                                        <td><span class="badge badge-${l.status}">${l.status}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<p class="text-muted fs-12">No loans found</p>'}
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Credit Cards (${c.credit_cards?.length || 0})</div>
+                    ${c.credit_cards?.length ? `
+                        <table>
+                            <thead>
+                                <tr><th>Card Number</th><th>Type</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                ${c.credit_cards.map(cc => `
+                                    <tr>
+                                        <td class="fw-600">${cc.card_number_masked}</td>
+                                        <td>${cc.card_type}</td>
+                                        <td><span class="badge badge-${cc.status}">${cc.status}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<p class="text-muted fs-12">No credit cards found</p>'}
+                </div>
+            `;
+        } catch (err) {
+            body.innerHTML = `<p style="color:var(--red); text-align:center; padding:24px;">Error loading customer: ${err.message}</p>`;
+        }
+    }
+
+    // ----------------------------------------
+    // ADD CUSTOMER
+    // ----------------------------------------
+    document.getElementById('addCustomerBtn').addEventListener('click', () => {
+        document.getElementById('modalError').classList.add('d-none');
+        document.getElementById('modalSuccess').classList.add('d-none');
+        document.getElementById('modalName').value = '';
+        document.getElementById('modalEmail').value = '';
+        document.getElementById('modalPhone').value = '';
+        document.getElementById('modalCity').value = '';
+        document.getElementById('modalKyc').value = 'pending';
+        document.getElementById('addCustomerModal').classList.add('open');
+    });
+
+    document.getElementById('saveCustomerBtn').addEventListener('click', async () => {
+        const name  = document.getElementById('modalName').value.trim();
+        const email = document.getElementById('modalEmail').value.trim();
+        const phone = document.getElementById('modalPhone').value.trim();
+        const city  = document.getElementById('modalCity').value.trim();
+        const kyc   = document.getElementById('modalKyc').value;
+        const errDiv = document.getElementById('modalError');
+        const sucDiv = document.getElementById('modalSuccess');
+
+        errDiv.classList.add('d-none');
+        sucDiv.classList.add('d-none');
+
+        if (!name || !email) {
+            errDiv.textContent = 'Name and email are required.';
+            errDiv.classList.remove('d-none');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/customers`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, phone, city, kyc_status: kyc })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                sucDiv.textContent = `Customer "${data.name}" created successfully.`;
+                sucDiv.classList.remove('d-none');
+                setTimeout(() => {
+                    document.getElementById('addCustomerModal').classList.remove('open');
+                    loadCustomers(currentPage);
+                }, 1000);
+            } else {
+                errDiv.textContent = data.error || 'Failed to create customer.';
+                errDiv.classList.remove('d-none');
+            }
+        } catch (err) {
+            errDiv.textContent = 'Server error. Please try again.';
+            errDiv.classList.remove('d-none');
+        }
+    });
+
+    // ----------------------------------------
+    // CLOSE MODALS
+    // ----------------------------------------
+    ['closeAddModal', 'cancelAddModal'].forEach(id => {
+        document.getElementById(id).addEventListener('click', () => {
+            document.getElementById('addCustomerModal').classList.remove('open');
+        });
+    });
+    document.getElementById('closeViewModal').addEventListener('click', () => {
+        document.getElementById('viewCustomerModal').classList.remove('open');
+    });
+
+    // ----------------------------------------
+    // EDIT CUSTOMER
+    // ----------------------------------------
+    function editCustomer(id, name, email, phone, city, kyc) {
+        document.getElementById('editCustomerId').value = id;
+        document.getElementById('editName').value = name;
+        document.getElementById('editEmail').value = email;
+        document.getElementById('editPhone').value = phone;
+        document.getElementById('editCity').value = city;
+        document.getElementById('editKyc').value = kyc;
+        document.getElementById('editModalError').classList.add('d-none');
+        document.getElementById('editModalSuccess').classList.add('d-none');
+        document.getElementById('editCustomerModal').classList.add('open');
+    }
+
+    document.getElementById('saveEditBtn').addEventListener('click', async () => {
+        const id    = document.getElementById('editCustomerId').value;
+        const name  = document.getElementById('editName').value.trim();
+        const email = document.getElementById('editEmail').value.trim();
+        const phone = document.getElementById('editPhone').value.trim();
+        const city  = document.getElementById('editCity').value.trim();
+        const kyc   = document.getElementById('editKyc').value;
+        const errDiv = document.getElementById('editModalError');
+        const sucDiv = document.getElementById('editModalSuccess');
+
+        errDiv.classList.add('d-none');
+        sucDiv.classList.add('d-none');
+
+        if (!name || !email) {
+            errDiv.textContent = 'Name and email are required.';
+            errDiv.classList.remove('d-none');
+            return;
+        }
+        try {
+            const res = await fetch(`${API}/customers/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, phone, city, kyc_status: kyc })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                sucDiv.textContent = `Customer updated successfully.`;
+                sucDiv.classList.remove('d-none');
+                setTimeout(() => {
+                    document.getElementById('editCustomerModal').classList.remove('open');
+                    loadCustomers(currentPage);
+                }, 1000);
+            } else {
+                errDiv.textContent = data.error || 'Failed to update customer.';
+                errDiv.classList.remove('d-none');
+            }
+        } catch (err) {
+            errDiv.textContent = 'Server error. Please try again.';
+            errDiv.classList.remove('d-none');
+        }
+    });
+
+    ['closeEditModal', 'cancelEditModal'].forEach(id => {
+        document.getElementById(id).addEventListener('click', () => {
+            document.getElementById('editCustomerModal').classList.remove('open');
+        });
+    });
+
+    // ----------------------------------------
+    // ADD ACCOUNT FOR CUSTOMER
+    // ----------------------------------------
+    function addAccountForCustomer(customerId, customerName) {
+        document.getElementById('addAccCustomerId').value = customerId;
+        document.getElementById('addAccCustomerName').textContent = `Adding account for: ${customerName}`;
+        document.getElementById('addAccType').value = 'savings';
+        document.getElementById('addAccBalance').value = '';
+        document.getElementById('addAccError').classList.add('d-none');
+        document.getElementById('addAccSuccess').classList.add('d-none');
+        document.getElementById('addAccountModal').classList.add('open');
+    }
+
+    document.getElementById('saveAddAccBtn').addEventListener('click', async () => {
+        const customerId  = document.getElementById('addAccCustomerId').value;
+        const accountType = document.getElementById('addAccType').value;
+        const balance     = document.getElementById('addAccBalance').value || 0;
+        const errDiv = document.getElementById('addAccError');
+        const sucDiv = document.getElementById('addAccSuccess');
+
+        errDiv.classList.add('d-none');
+        sucDiv.classList.add('d-none');
+
+        try {
+            const res = await fetch(`${API}/accounts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ customer_id: customerId, account_type: accountType, balance })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                sucDiv.textContent = `${accountType} account created — #${data.account_number}`;
+                sucDiv.classList.remove('d-none');
+                setTimeout(() => {
+                    document.getElementById('addAccountModal').classList.remove('open');
+                }, 1200);
+            } else {
+                errDiv.textContent = data.error || 'Failed to create account.';
+                errDiv.classList.remove('d-none');
+            }
+        } catch (err) {
+            errDiv.textContent = 'Server error. Please try again.';
+            errDiv.classList.remove('d-none');
+        }
+    });
+
+    ['closeAddAccountModal', 'cancelAddAccountModal'].forEach(id => {
+        document.getElementById(id).addEventListener('click', () => {
+            document.getElementById('addAccountModal').classList.remove('open');
+        });
+    });
+
+    // Close all modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.classList.remove('open');
+        });
+    });
+
+    // ----------------------------------------
+    // FILTERS
+    // ----------------------------------------
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('input', function () {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentSearch = this.value;
+            currentPage = 1;
+            loadCustomers(1);
+        }, 400);
+    });
+
+    document.getElementById('kycFilter').addEventListener('change', function () {
+        currentKyc = this.value;
+        currentPage = 1;
+        loadCustomers(1);
+    });
+
+    document.getElementById('rowsPerPage').addEventListener('change', function () {
+        limit = parseInt(this.value);
+        currentPage = 1;
+        loadCustomers(1);
+    });
+
+    // ----------------------------------------
+    // INIT
+    // ----------------------------------------
+    loadCustomers();
+</script>
+<script src="js/sidebar.js"></script>
+</body>
+</html>

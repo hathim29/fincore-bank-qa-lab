@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinCore Bank — Login</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-logo">
+            <div class="logo-icon">F</div>
+            <h1>FinCore Bank</h1>
+            <p>QA Practice Lab — Internal Portal</p>
+        </div>
+
+        <div id="loginError" class="alert alert-danger d-none"></div>
+        <div id="loginSuccess" class="alert alert-success d-none"></div>
+
+        <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-control" id="username"
+                   data-testid="username-input" placeholder="Enter username" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" id="password"
+                   data-testid="password-input" placeholder="Enter password">
+        </div>
+
+        <button class="btn btn-primary w-100" id="loginBtn"
+                data-testid="login-button" style="margin-top: 8px; padding: 10px;">
+            <i class="ti ti-login"></i> Sign In
+        </button>
+
+        <p style="text-align:center; margin-top: 20px; font-size: 12px; color: var(--text-muted);">
+            Demo: <strong>admin / admin123</strong> &nbsp;|&nbsp; <strong>viewer / viewer123</strong>
+        </p>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:3000/api';
+
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const errorDiv = document.getElementById('loginError');
+        const successDiv = document.getElementById('loginSuccess');
+
+        errorDiv.classList.add('d-none');
+        successDiv.classList.add('d-none');
+
+        if (!username || !password) {
+            errorDiv.textContent = 'Username and password are required.';
+            errorDiv.classList.remove('d-none');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/customers?limit=1`);
+            if (!res.ok) throw new Error('Server error');
+
+            // Simple credential check against known users
+            const validUsers = [
+                { username: 'admin', password: 'admin123', role: 'admin' },
+                { username: 'viewer', password: 'viewer123', role: 'viewer' }
+            ];
+
+            const user = validUsers.find(u => u.username === username && u.password === password);
+
+            if (!user) {
+                errorDiv.textContent = 'Invalid username or password.';
+                errorDiv.classList.remove('d-none');
+                return;
+            }
+
+            sessionStorage.setItem('fincore_user', JSON.stringify({ username: user.username, role: user.role }));
+            successDiv.textContent = 'Login successful! Redirecting...';
+            successDiv.classList.remove('d-none');
+            setTimeout(() => window.location.href = 'dashboard.html', 800);
+
+        } catch (err) {
+            errorDiv.textContent = 'Cannot connect to server. Make sure server is running.';
+            errorDiv.classList.remove('d-none');
+        }
+    });
+
+    // Enter key support
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('loginBtn').click();
+    });
+</script>
+</body>
+</html>

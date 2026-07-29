@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinCore Bank — Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" data-testid="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">F</div>
+            <div>
+                <div class="logo-text">FinCore Bank</div>
+                <div class="logo-sub">QA Practice Lab</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <a href="dashboard.html" class="nav-item active" data-testid="nav-dashboard">
+                <i class="ti ti-layout-dashboard nav-icon"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="accounts.html" class="nav-item" data-testid="nav-accounts">
+                <i class="ti ti-building-bank nav-icon"></i>
+                <span>Accounts</span>
+            </a>
+            <a href="transactions.html" class="nav-item" data-testid="nav-transactions">
+                <i class="ti ti-arrows-exchange nav-icon"></i>
+                <span>Transactions</span>
+            </a>
+            <div class="nav-section-label">Products</div>
+            <a href="customers.html" class="nav-item" data-testid="nav-customers">
+                <i class="ti ti-users nav-icon"></i>
+                <span>Customers</span>
+            </a>
+            <a href="loans.html" class="nav-item" data-testid="nav-loans">
+                <i class="ti ti-receipt nav-icon"></i>
+                <span>Loans</span>
+            </a>
+            <a href="credit-cards.html" class="nav-item" data-testid="nav-credit-cards">
+                <i class="ti ti-credit-card nav-icon"></i>
+                <span>Credit Cards</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="login.html" class="nav-item" data-testid="logout-button">
+                <i class="ti ti-logout nav-icon"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <div>
+                    <div class="page-title">Dashboard</div>
+                    <div class="page-subtitle">Welcome back — here's what's happening today</div>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <span id="topbarUser" style="font-size:12px; color:var(--text-muted);"></span>
+                <div class="topbar-avatar" id="topbarAvatar">A</div>
+            </div>
+        </header>
+
+        <div class="page-body">
+
+            <!-- STAT CARDS -->
+            <div class="stat-grid" data-testid="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="ti ti-users"></i></div>
+                    <div>
+                        <div class="stat-value" id="statCustomers" data-testid="stat-customers">—</div>
+                        <div class="stat-label">Total Customers</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon teal"><i class="ti ti-building-bank"></i></div>
+                    <div>
+                        <div class="stat-value" id="statAccounts" data-testid="stat-accounts">—</div>
+                        <div class="stat-label">Active Accounts</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="ti ti-arrows-exchange"></i></div>
+                    <div>
+                        <div class="stat-value" id="statTxnToday" data-testid="stat-txn-today">—</div>
+                        <div class="stat-label">Transactions Today</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple"><i class="ti ti-receipt"></i></div>
+                    <div>
+                        <div class="stat-value" id="statLoans" data-testid="stat-loans">—</div>
+                        <div class="stat-label">Active Loans</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="ti ti-credit-card"></i></div>
+                    <div>
+                        <div class="stat-value" id="statCards" data-testid="stat-cards">—</div>
+                        <div class="stat-label">Active Cards</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red"><i class="ti ti-alert-triangle"></i></div>
+                    <div>
+                        <div class="stat-value" id="statOverdue" data-testid="stat-overdue">—</div>
+                        <div class="stat-label">Overdue Loans</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM GRID -->
+            <div style="display:grid; grid-template-columns: 1fr 360px; gap:20px;">
+
+                <!-- RECENT TRANSACTIONS -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Recent Transactions</span>
+                        <a href="transactions.html" class="btn btn-outline btn-sm">View all</a>
+                    </div>
+                    <div class="table-wrap">
+                        <table data-testid="recent-txn-table">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Type</th>
+                                    <th>Channel</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTxnBody" data-testid="recent-txn-body">
+                                <tr class="loading-row"><td colspan="6">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ALERTS PANEL -->
+                <div style="display:flex; flex-direction:column; gap:16px;">
+
+                    <!-- Overdue Loans -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title" style="color:var(--red);">
+                                <i class="ti ti-alert-circle"></i> Overdue Loans
+                            </span>
+                        </div>
+                        <div class="card-body" style="padding:12px;">
+                            <div id="overdueAlerts" data-testid="overdue-alerts">
+                                <p class="text-muted" style="text-align:center; padding:12px;">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cards Due Soon -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title" style="color:var(--amber);">
+                                <i class="ti ti-clock"></i> Cards Due Soon
+                            </span>
+                        </div>
+                        <div class="card-body" style="padding:12px;">
+                            <div id="cardsDueAlerts" data-testid="cards-due-alerts">
+                                <p class="text-muted" style="text-align:center; padding:12px;">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:3000/api';
+
+    // Auth check
+    const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
+    if (!user.username) window.location.href = 'login.html';
+    document.getElementById('topbarUser').textContent = user.username || '';
+    document.getElementById('topbarAvatar').textContent = (user.username || 'A')[0].toUpperCase();
+
+    function fmt(n) { return parseFloat(n).toLocaleString('en-IN', { maximumFractionDigits: 0 }); }
+    function fmtAmt(n) { return '₹' + parseFloat(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    async function loadStats() {
+        const res = await fetch(`${API}/dashboard/stats`);
+        const d = await res.json();
+        document.getElementById('statCustomers').textContent = fmt(d.total_customers);
+        document.getElementById('statAccounts').textContent  = fmt(d.active_accounts);
+        document.getElementById('statTxnToday').textContent  = fmt(d.transactions_today);
+        document.getElementById('statLoans').textContent     = fmt(d.active_loans);
+        document.getElementById('statCards').textContent     = fmt(d.active_cards);
+        document.getElementById('statOverdue').textContent   = fmt(d.overdue_loans);
+    }
+
+    async function loadRecentTxns() {
+        const res = await fetch(`${API}/dashboard/recent-transactions`);
+        const rows = await res.json();
+        const tbody = document.getElementById('recentTxnBody');
+        if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-muted" style="text-align:center;padding:20px;">No transactions today</td></tr>'; return; }
+
+        tbody.innerHTML = rows.map(t => `
+            <tr>
+                <td><span class="fw-600">${t.customer_name}</span><br>
+                    <span class="text-muted">${t.account_number}</span></td>
+                <td><span class="badge badge-${t.transaction_type === 'deposit' ? 'success' : t.transaction_type === 'withdrawal' ? 'danger' : 'info'}">${t.transaction_type}</span></td>
+                <td>${t.channel}</td>
+                <td class="fw-600">${fmtAmt(t.amount)}</td>
+                <td><span class="badge badge-${t.status}">${t.status}</span></td>
+                <td class="text-muted">${new Date(t.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadAlerts() {
+        const res = await fetch(`${API}/dashboard/alerts`);
+        const d = await res.json();
+
+        const overdueDiv = document.getElementById('overdueAlerts');
+        if (!d.overdue_loans?.length) {
+            overdueDiv.innerHTML = '<p class="text-muted" style="text-align:center;padding:8px;font-size:12px;">No overdue loans 🎉</p>';
+        } else {
+            overdueDiv.innerHTML = d.overdue_loans.map(l => `
+                <div style="padding:8px 0; border-bottom:1px solid var(--border-color); font-size:13px;">
+                    <div class="fw-600">${l.customer_name}</div>
+                    <div class="text-muted">${l.loan_type} · Outstanding: ${fmtAmt(l.outstanding_balance)}</div>
+                </div>
+            `).join('');
+        }
+
+        const cardsDiv = document.getElementById('cardsDueAlerts');
+        if (!d.cards_due_soon?.length) {
+            cardsDiv.innerHTML = '<p class="text-muted" style="text-align:center;padding:8px;font-size:12px;">No cards due soon 🎉</p>';
+        } else {
+            cardsDiv.innerHTML = d.cards_due_soon.map(c => `
+                <div style="padding:8px 0; border-bottom:1px solid var(--border-color); font-size:13px;">
+                    <div class="fw-600">${c.customer_name}</div>
+                    <div class="text-muted">${c.card_number_masked} · Due: ${fmtAmt(c.minimum_due)} · ${c.days_remaining}d left</div>
+                </div>
+            `).join('');
+        }
+    }
+
+    loadStats();
+    loadRecentTxns();
+    loadAlerts();
+</script>
+<script src="js/sidebar.js"></script>
+</body>
+</html>

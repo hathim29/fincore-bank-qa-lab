@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinCore Bank — Transactions</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        .badge-active    { background:#DCFCE7; color:#15803D; }
+        .badge-frozen    { background:#FEF9C3; color:#854D0E; }
+        .badge-closed    { background:#FEE2E2; color:#B91C1C; }
+        .badge-verified  { background:#DCFCE7; color:#15803D; }
+        .badge-pending   { background:#FEF3C7; color:#D97706; }
+        .badge-rejected  { background:#FEE2E2; color:#B91C1C; }
+        .badge-savings   { background:#DBEAFE; color:#1D4ED8; }
+        .badge-current   { background:#EDE9FE; color:#6D28D9; }
+        .badge-salary    { background:#CCFBF1; color:#0F766E; }
+        .badge-success   { background:#DCFCE7; color:#15803D; }
+        .badge-failed    { background:#FEE2E2; color:#B91C1C; }
+        .badge-deposit   { background:#DCFCE7; color:#15803D; }
+        .badge-withdrawal{ background:#FEE2E2; color:#B91C1C; }
+        .badge-transfer  { background:#DBEAFE; color:#1D4ED8; }
+
+        .amt-deposit  { color:#15803D; font-weight:600; }
+        .amt-withdrawal { color:#B91C1C; font-weight:600; }
+        .amt-transfer { color:#1D4ED8; font-weight:600; }
+        .bal-positive { color:#15803D; font-weight:600; }
+        .bal-negative { color:#B91C1C; font-weight:600; }
+        .bal-zero     { color:var(--text-muted); font-weight:600; }
+
+        .channel-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 11.5px; padding: 2px 8px;
+            background: #f1f5f9; color: #475569;
+            border-radius: 20px; white-space: nowrap;
+        }
+
+        .txn-history-row { background: #fafbfc; }
+        .txn-history-row:hover { background: #f1f5f9 !important; }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" data-testid="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">F</div>
+            <div><div class="logo-text">FinCore Bank</div><div class="logo-sub">QA Practice Lab</div></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <a href="dashboard.html" class="nav-item" data-testid="nav-dashboard"><i class="ti ti-layout-dashboard nav-icon"></i><span>Dashboard</span></a>
+            <a href="accounts.html" class="nav-item" data-testid="nav-accounts"><i class="ti ti-building-bank nav-icon"></i><span>Accounts</span></a>
+            <a href="transactions.html" class="nav-item active" data-testid="nav-transactions"><i class="ti ti-arrows-exchange nav-icon"></i><span>Transactions</span></a>
+            <div class="nav-section-label">Products</div>
+            <a href="customers.html" class="nav-item" data-testid="nav-customers"><i class="ti ti-users nav-icon"></i><span>Customers</span></a>
+            <a href="loans.html" class="nav-item" data-testid="nav-loans"><i class="ti ti-receipt nav-icon"></i><span>Loans</span></a>
+            <a href="credit-cards.html" class="nav-item" data-testid="nav-credit-cards"><i class="ti ti-credit-card nav-icon"></i><span>Credit Cards</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="login.html" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <div>
+                    <div class="page-title">Transactions</div>
+                    <div class="page-subtitle">All general banking transactions — deposits, withdrawals and transfers</div>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <span id="topbarUser" style="font-size:12px;color:var(--text-muted);"></span>
+                <div class="topbar-avatar" id="topbarAvatar">A</div>
+            </div>
+        </header>
+
+        <div class="page-body">
+
+            <!-- STAT CARDS -->
+            <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);" data-testid="txn-stat-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="ti ti-arrows-exchange"></i></div>
+                    <div><div class="stat-value" id="statTotal" data-testid="stat-total">—</div><div class="stat-label">Total Transactions</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="ti ti-arrow-down-circle"></i></div>
+                    <div><div class="stat-value" id="statDeposit" data-testid="stat-deposit">—</div><div class="stat-label">Deposits</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red"><i class="ti ti-arrow-up-circle"></i></div>
+                    <div><div class="stat-value" id="statWithdrawal" data-testid="stat-withdrawal">—</div><div class="stat-label">Withdrawals</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple"><i class="ti ti-arrows-right-left"></i></div>
+                    <div><div class="stat-value" id="statTransfer" data-testid="stat-transfer">—</div><div class="stat-label">Transfers</div></div>
+                </div>
+            </div>
+
+            <!-- TABLE CARD -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="filters-row" style="margin-bottom:0;flex:1;">
+                        <select class="filter-select" id="typeFilter" data-testid="type-filter">
+                            <option value="">All Types</option>
+                            <option value="deposit">Deposit</option>
+                            <option value="withdrawal">Withdrawal</option>
+                            <option value="transfer">Transfer</option>
+                        </select>
+                        <select class="filter-select" id="channelFilter" data-testid="channel-filter">
+                            <option value="">All Channels</option>
+                            <option value="cash">Cash</option>
+                            <option value="ATM">ATM</option>
+                            <option value="NEFT">NEFT</option>
+                            <option value="RTGS">RTGS</option>
+                            <option value="IMPS">IMPS</option>
+                            <option value="UPI-GPay">UPI-GPay</option>
+                            <option value="UPI-PhonePe">UPI-PhonePe</option>
+                            <option value="UPI-Paytm">UPI-Paytm</option>
+                            <option value="UPI-Other">UPI-Other</option>
+                            <option value="cheque">Cheque</option>
+                            <option value="branch">Branch</option>
+                        </select>
+                        <select class="filter-select" id="statusFilter" data-testid="status-filter">
+                            <option value="">All Statuses</option>
+                            <option value="success">Success</option>
+                            <option value="failed">Failed</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                        <select class="filter-select" id="rowsPerPage" data-testid="rows-per-page">
+                            <option value="10">10 rows</option>
+                            <option value="25">25 rows</option>
+                            <option value="50">50 rows</option>
+                        </select>
+                        <span class="total-count" id="totalCount" data-testid="total-count"></span>
+                    </div>
+                    <button class="btn btn-primary" id="addTxnBtn" data-testid="add-txn-btn"
+                            style="margin-left:16px;white-space:nowrap;display:none;">
+                        <i class="ti ti-plus"></i> Add Transaction
+                    </button>
+                </div>
+
+                <div class="table-wrap">
+                    <table data-testid="transactions-table">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Customer</th>
+                                <th>Account No.</th>
+                                <th>Type</th>
+                                <th>Channel</th>
+                                <th>Amount</th>
+                                <th>Balance After</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="txnBody" data-testid="transactions-body">
+                            <tr class="loading-row"><td colspan="9">Loading transactions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-row">
+                    <span class="page-info" id="pageInfo" data-testid="page-info"></span>
+                    <div class="pagination" id="pagination" data-testid="pagination"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW TRANSACTION POPUP -->
+<div class="modal-overlay" id="viewTxnModal" data-testid="view-txn-modal">
+    <div class="modal-panel wide">
+        <div class="modal-header">
+            <span class="modal-title" id="viewModalTitle">Transaction Details</span>
+            <button class="modal-close" id="closeViewModal">✕</button>
+        </div>
+        <div class="modal-body" id="viewModalBody">
+            <p class="text-muted" style="text-align:center;padding:24px;">Loading...</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="document.getElementById('viewTxnModal').classList.remove('open')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ADD TRANSACTION MODAL (admin only) -->
+<div class="modal-overlay" id="addTxnModal" data-testid="add-txn-modal">
+    <div class="modal-panel">
+        <div class="modal-header">
+            <span class="modal-title"><i class="ti ti-plus"></i> Add Transaction</span>
+            <button class="modal-close" id="closeAddTxnModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="addTxnError" class="alert alert-danger d-none"></div>
+            <div id="addTxnSuccess" class="alert alert-success d-none"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Account Number *</label>
+                    <input type="text" class="form-control" id="txnAccountNum"
+                           data-testid="txn-account-num" placeholder="Enter account number">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Transaction Type *</label>
+                    <select class="form-control" id="txnType" data-testid="txn-type">
+                        <option value="deposit">Deposit</option>
+                        <option value="withdrawal">Withdrawal</option>
+                        <option value="transfer">Transfer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Channel *</label>
+                    <select class="form-control" id="txnChannel" data-testid="txn-channel">
+                        <option value="cash">Cash</option>
+                        <option value="ATM">ATM</option>
+                        <option value="NEFT">NEFT</option>
+                        <option value="RTGS">RTGS</option>
+                        <option value="IMPS">IMPS</option>
+                        <option value="UPI-GPay">UPI-GPay</option>
+                        <option value="UPI-PhonePe">UPI-PhonePe</option>
+                        <option value="UPI-Paytm">UPI-Paytm</option>
+                        <option value="UPI-Other">UPI-Other</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="branch">Branch</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (₹) *</label>
+                    <input type="number" class="form-control" id="txnAmount"
+                           data-testid="txn-amount" placeholder="0.00" min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-control" id="txnDesc"
+                           data-testid="txn-desc" placeholder="Optional description">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" id="cancelAddTxnModal">Cancel</button>
+            <button class="btn btn-primary" id="saveTxnBtn" data-testid="save-txn-btn">
+                <i class="ti ti-check"></i> Submit Transaction
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = 'http://localhost:3000/api';
+const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
+if (!user.username) window.location.href = 'login.html';
+document.getElementById('topbarUser').textContent = user.username || '';
+document.getElementById('topbarAvatar').textContent = (user.username || 'A')[0].toUpperCase();
+
+let currentPage=1, currentType='', currentChannel='', currentStatus='', limit=10;
+
+// Show add button for admin only
+if (user.role === 'admin') {
+    const btn = document.getElementById('addTxnBtn');
+    if (btn) btn.style.display = 'inline-flex';
+}
+
+function fmtDate(d) { return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtDateTime(d) { return fmtDate(d)+' '+new Date(d).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}); }
+function fmtAmt(n) { return '₹'+parseFloat(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function badge(cls,text) { return `<span class="badge badge-${cls}">${text}</span>`; }
+function statusBadge(s) { return badge(s,s); }
+function typeBadge(t) { return badge(t,t); }
+function amtClass(t) { return `amt-${t}`; }
+function balClass(n) { const v=parseFloat(n); return v>0?'bal-positive':v<0?'bal-negative':'bal-zero'; }
+function channelChip(c) { return `<span class="channel-chip">${c}</span>`; }
+
+// ----------------------------------------
+// STATS
+// ----------------------------------------
+async function loadStats() {
+    try {
+        const [tot,dep,wit,tra] = await Promise.all([
+            fetch(`${API}/transactions?limit=1`).then(r=>r.json()),
+            fetch(`${API}/transactions?limit=1&transaction_type=deposit`).then(r=>r.json()),
+            fetch(`${API}/transactions?limit=1&transaction_type=withdrawal`).then(r=>r.json()),
+            fetch(`${API}/transactions?limit=1&transaction_type=transfer`).then(r=>r.json()),
+        ]);
+        document.getElementById('statTotal').textContent      = tot.total;
+        document.getElementById('statDeposit').textContent    = dep.total;
+        document.getElementById('statWithdrawal').textContent = wit.total;
+        document.getElementById('statTransfer').textContent   = tra.total;
+    } catch(e){ console.error(e); }
+}
+
+// ----------------------------------------
+// LOAD TRANSACTIONS
+// ----------------------------------------
+async function loadTransactions(page=1) {
+    const tbody = document.getElementById('txnBody');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="9">Loading...</td></tr>';
+    try {
+        const p = new URLSearchParams({page, limit});
+        if (currentType)    p.append('transaction_type', currentType);
+        if (currentChannel) p.append('channel', currentChannel);
+        if (currentStatus)  p.append('status', currentStatus);
+
+        const res  = await fetch(`${API}/transactions?${p}`);
+        const data = await res.json();
+
+        document.getElementById('totalCount').textContent =
+            `${data.total} transaction${data.total!==1?'s':''} found`;
+        document.getElementById('pageInfo').textContent =
+            `Page ${page} of ${Math.ceil(data.total/limit)||1}`;
+
+        if (!data.data.length) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text-muted);">No transactions found</td></tr>';
+            renderPagination(0,page); return;
+        }
+
+        tbody.innerHTML = data.data.map(t => `
+            <tr data-testid="txn-row-${t.id}" onclick="viewTransaction(${t.id})">
+                <td style="font-family:monospace;font-size:11px;color:var(--text-muted);">${t.reference_number}</td>
+                <td>
+                    <div class="fw-600">${t.customer_name}</div>
+                    <div class="text-muted">${t.customer_email || ''}</div>
+                </td>
+                <td style="font-family:monospace;font-size:12px;">${t.account_number}</td>
+                <td>${typeBadge(t.transaction_type)}</td>
+                <td>${channelChip(t.channel)}</td>
+                <td class="${amtClass(t.transaction_type)}">
+                    ${t.transaction_type==='deposit'?'+':'-'}${fmtAmt(t.amount)}
+                </td>
+                <td class="${balClass(t.balance_after)}">${fmtAmt(t.balance_after)}</td>
+                <td>${statusBadge(t.status)}</td>
+                <td class="text-muted" style="white-space:nowrap;font-size:12px;">${fmtDateTime(t.created_at)}</td>
+            </tr>
+        `).join('');
+
+        renderPagination(data.total, page);
+    } catch(err) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--red);">Error: ${err.message}</td></tr>`;
+    }
+}
+
+// ----------------------------------------
+// PAGINATION
+// ----------------------------------------
+function renderPagination(total, page) {
+    const tp = Math.ceil(total/limit)||1;
+    const pg = document.getElementById('pagination');
+    pg.innerHTML = '';
+    const btn = (lbl,p,dis,act,tid) => {
+        const b = document.createElement('button');
+        b.className = 'page-btn'+(act?' active':'');
+        b.textContent = lbl; b.disabled = dis;
+        b.setAttribute('data-testid', tid);
+        b.addEventListener('click', ()=>{ currentPage=p; loadTransactions(p); });
+        pg.appendChild(b);
+    };
+    btn('←', page-1, page===1, false, 'prev-page');
+    for (let i=Math.max(1,page-2); i<=Math.min(tp,page+2); i++) btn(String(i),i,false,i===page,`page-${i}`);
+    btn('→', page+1, page===tp, false, 'next-page');
+    btn('»', tp, page===tp, false, 'last-page');
+}
+
+// ----------------------------------------
+// VIEW TRANSACTION POPUP
+// ----------------------------------------
+async function viewTransaction(id) {
+    const modal = document.getElementById('viewTxnModal');
+    const body  = document.getElementById('viewModalBody');
+    body.innerHTML = '<p class="text-muted" style="text-align:center;padding:32px;">Loading...</p>';
+    modal.classList.add('open');
+
+    try {
+        const res = await fetch(`${API}/transactions/${id}`);
+        const t   = await res.json();
+
+        document.getElementById('viewModalTitle').innerHTML =
+            `<i class="ti ti-arrows-exchange"></i>&nbsp; ${t.reference_number}&nbsp; ${typeBadge(t.transaction_type)}&nbsp; ${statusBadge(t.status)}`;
+
+        body.innerHTML = `
+            <div class="detail-section">
+                <div class="detail-section-title">Transaction Details</div>
+                <div class="detail-grid">
+                    <div class="detail-item"><label>Reference Number</label>
+                        <span style="font-family:monospace;font-size:14px;font-weight:600;">${t.reference_number}</span></div>
+                    <div class="detail-item"><label>Transaction Type</label><span>${typeBadge(t.transaction_type)}</span></div>
+                    <div class="detail-item"><label>Amount</label>
+                        <span class="${amtClass(t.transaction_type)}" style="font-size:22px;">
+                            ${t.transaction_type==='deposit'?'+':'-'}${fmtAmt(t.amount)}
+                        </span>
+                    </div>
+                    <div class="detail-item"><label>Channel</label><span>${channelChip(t.channel)}</span></div>
+                    <div class="detail-item"><label>Status</label><span>${statusBadge(t.status)}</span></div>
+                    <div class="detail-item"><label>Date & Time</label><span>${fmtDateTime(t.created_at)}</span></div>
+                    <div class="detail-item"><label>Balance After</label>
+                        <span class="${balClass(t.balance_after)}" style="font-size:16px;">${fmtAmt(t.balance_after)}</span></div>
+                    ${t.description ? `<div class="detail-item" style="grid-column:1/-1;"><label>Description</label><span>${t.description}</span></div>` : ''}
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <div class="detail-section-title">Customer & Account</div>
+                <div class="detail-grid">
+                    <div class="detail-item"><label>Customer Name</label><span class="fw-600">${t.customer_name}</span></div>
+                    <div class="detail-item"><label>Account Number</label>
+                        <span style="font-family:monospace;font-weight:600;">${t.account_number}</span></div>
+                    <div class="detail-item"><label>Account Type</label>
+                        <span><span class="badge badge-${t.account_type}">${t.account_type}</span></span></div>
+                    <div class="detail-item"><label>Current Balance</label>
+                        <span class="${balClass(t.current_balance)}" style="font-size:16px;">${fmtAmt(t.current_balance)}</span></div>
+                    <div class="detail-item"><label>Account Status</label><span><span class="badge badge-${t.account_status}">${t.account_status}</span></span></div>
+                    <div class="detail-item"><label>KYC Status</label>
+                        <span><span class="badge badge-${t.kyc_status}">${t.kyc_status}</span></span></div>
+                    <div class="detail-item"><label>Phone</label><span>${t.customer_phone||'—'}</span></div>
+                    <div class="detail-item"><label>City</label><span>${t.customer_city||'—'}</span></div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <div class="detail-section-title">Account Transaction History (Last 5)</div>
+                ${t.account_history?.length ? `
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Date</th><th>Type</th><th>Channel</th><th>Amount</th><th>Balance After</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            ${t.account_history.map(h => `
+                                <tr class="txn-history-row" ${h.id===t.id?'style="background:#EFF6FF;"':''}>
+                                    <td class="text-muted" style="font-size:12px;white-space:nowrap;">${fmtDateTime(h.created_at)}</td>
+                                    <td>${typeBadge(h.transaction_type)}</td>
+                                    <td>${channelChip(h.channel)}</td>
+                                    <td class="${amtClass(h.transaction_type)}" style="font-weight:600;">
+                                        ${h.transaction_type==='deposit'?'+':'-'}${fmtAmt(h.amount)}
+                                    </td>
+                                    <td class="${balClass(h.balance_after)}">${fmtAmt(h.balance_after)}</td>
+                                    <td>${statusBadge(h.status)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted" style="font-size:11px;margin-top:8px;">
+                    <i class="ti ti-info-circle"></i>
+                    The highlighted row is the currently selected transaction.
+                </p>` : '<p class="text-muted fs-12" style="padding:8px 0;">No transaction history found</p>'}
+            </div>
+        `;
+    } catch(err) {
+        body.innerHTML = `<p style="color:var(--red);text-align:center;padding:24px;">Error: ${err.message}</p>`;
+    }
+}
+
+// ----------------------------------------
+// ADD TRANSACTION (admin only)
+// ----------------------------------------
+const addTxnBtn = document.getElementById('addTxnBtn');
+if (addTxnBtn) {
+    addTxnBtn.addEventListener('click', () => {
+        document.getElementById('addTxnError').classList.add('d-none');
+        document.getElementById('addTxnSuccess').classList.add('d-none');
+        document.getElementById('txnAccountNum').value = '';
+        document.getElementById('txnAmount').value = '';
+        document.getElementById('txnDesc').value = '';
+        document.getElementById('addTxnModal').classList.add('open');
+    });
+}
+
+document.getElementById('saveTxnBtn').addEventListener('click', async () => {
+    const accountNum = document.getElementById('txnAccountNum').value.trim();
+    const txnType    = document.getElementById('txnType').value;
+    const channel    = document.getElementById('txnChannel').value;
+    const amount     = document.getElementById('txnAmount').value;
+    const desc       = document.getElementById('txnDesc').value.trim();
+    const errDiv     = document.getElementById('addTxnError');
+    const sucDiv     = document.getElementById('addTxnSuccess');
+
+    errDiv.classList.add('d-none');
+    sucDiv.classList.add('d-none');
+
+    if (!accountNum || !amount) {
+        errDiv.textContent = 'Account number and amount are required.';
+        errDiv.classList.remove('d-none'); return;
+    }
+
+    try {
+        // First resolve account number to account ID
+        const accRes  = await fetch(`${API}/accounts?limit=100`);
+        const accData = await accRes.json();
+        const account = accData.data.find(a => a.account_number === accountNum);
+
+        if (!account) {
+            errDiv.textContent = 'Account number not found.';
+            errDiv.classList.remove('d-none'); return;
+        }
+        if (account.status !== 'active') {
+            errDiv.textContent = `Account is ${account.status}. Transactions not allowed.`;
+            errDiv.classList.remove('d-none'); return;
+        }
+
+        const res = await fetch(`${API}/transactions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                account_id: account.id,
+                transaction_type: txnType,
+                channel, amount: parseFloat(amount),
+                description: desc
+            })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            sucDiv.textContent = `Transaction ${data.reference_number} created successfully.`;
+            sucDiv.classList.remove('d-none');
+            setTimeout(() => {
+                document.getElementById('addTxnModal').classList.remove('open');
+                loadTransactions(currentPage);
+                loadStats();
+            }, 1200);
+        } else {
+            errDiv.textContent = data.error || 'Failed to create transaction.';
+            errDiv.classList.remove('d-none');
+        }
+    } catch(err) {
+        errDiv.textContent = 'Server error. Please try again.';
+        errDiv.classList.remove('d-none');
+    }
+});
+
+// ----------------------------------------
+// CLOSE MODALS
+// ----------------------------------------
+document.getElementById('closeViewModal').addEventListener('click', () =>
+    document.getElementById('viewTxnModal').classList.remove('open'));
+document.getElementById('closeAddTxnModal').addEventListener('click', () =>
+    document.getElementById('addTxnModal').classList.remove('open'));
+document.getElementById('cancelAddTxnModal').addEventListener('click', () =>
+    document.getElementById('addTxnModal').classList.remove('open'));
+document.querySelectorAll('.modal-overlay').forEach(o =>
+    o.addEventListener('click', e => { if (e.target===o) o.classList.remove('open'); }));
+
+// ----------------------------------------
+// FILTERS
+// ----------------------------------------
+document.getElementById('typeFilter').addEventListener('change', function() {
+    currentType=this.value; currentPage=1; loadTransactions(1);
+});
+document.getElementById('channelFilter').addEventListener('change', function() {
+    currentChannel=this.value; currentPage=1; loadTransactions(1);
+});
+document.getElementById('statusFilter').addEventListener('change', function() {
+    currentStatus=this.value; currentPage=1; loadTransactions(1);
+});
+document.getElementById('rowsPerPage').addEventListener('change', function() {
+    limit=parseInt(this.value); currentPage=1; loadTransactions(1);
+});
+
+// ----------------------------------------
+// INIT
+// ----------------------------------------
+loadStats();
+loadTransactions();
+</script>
+<script src="js/sidebar.js"></script>
+</body>
+</html>
