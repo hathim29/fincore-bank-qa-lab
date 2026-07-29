@@ -1,20 +1,20 @@
 -- FinCore Bank — Complete Database Schema
--- Run this file to create all tables fresh
--- psql -U postgres -d fincore_bank -f schema.sql
+-- Fixed table creation order — no forward reference issues
+-- Run in Supabase SQL Editor
 
--- Drop existing tables in correct order (foreign key dependencies)
+-- Drop existing tables in correct order
 DROP TABLE IF EXISTS loan_score CASCADE;
 DROP TABLE IF EXISTS loan_repayments CASCADE;
 DROP TABLE IF EXISTS credit_card_transactions CASCADE;
 DROP TABLE IF EXISTS credit_cards CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
-DROP TABLE IF EXISTS accounts CASCADE;
 DROP TABLE IF EXISTS loans CASCADE;
+DROP TABLE IF EXISTS accounts CASCADE;
 DROP TABLE IF EXISTS customers CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
 -- ============================================================
--- USERS (for login — admin and viewer roles)
+-- USERS
 -- ============================================================
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -51,25 +51,6 @@ CREATE TABLE accounts (
 );
 
 -- ============================================================
--- TRANSACTIONS (general banking transactions)
--- ============================================================
-CREATE TABLE transactions (
-    id SERIAL PRIMARY KEY,
-    account_id INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
-    customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
-    transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('deposit', 'withdrawal', 'transfer')),
-    channel VARCHAR(30) NOT NULL CHECK (channel IN ('cash', 'ATM', 'NEFT', 'RTGS', 'IMPS', 'UPI-GPay', 'UPI-PhonePe', 'UPI-Paytm', 'UPI-Other', 'cheque', 'branch')),
-    amount NUMERIC(15, 2) NOT NULL CHECK (amount > 0),
-    balance_after NUMERIC(15, 2) NOT NULL,
-    status VARCHAR(20) DEFAULT 'success' CHECK (status IN ('success', 'failed', 'pending')),
-    reference_number VARCHAR(30) UNIQUE NOT NULL,
-    description TEXT,
-    linked_loan_id INTEGER REFERENCES loans(id) ON DELETE SET NULL,
-    linked_card_id INTEGER REFERENCES credit_cards(id) ON DELETE SET NULL,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
--- ============================================================
 -- LOANS
 -- ============================================================
 CREATE TABLE loans (
@@ -86,6 +67,43 @@ CREATE TABLE loans (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     applied_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================================================
+-- CREDIT CARDS
+-- ============================================================
+CREATE TABLE credit_cards (
+    id SERIAL PRIMARY KEY,
+    customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+    card_number VARCHAR(20) NOT NULL,
+    card_number_masked VARCHAR(20) NOT NULL,
+    card_type VARCHAR(20) NOT NULL CHECK (card_type IN ('Visa', 'Mastercard', 'RuPay')),
+    credit_limit NUMERIC(15, 2) NOT NULL,
+    outstanding_balance NUMERIC(15, 2) DEFAULT 0.00,
+    minimum_due NUMERIC(15, 2) DEFAULT 0.00,
+    due_date DATE,
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'blocked', 'expired')),
+    issued_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================================================
+-- TRANSACTIONS
+-- (defined AFTER loans and credit_cards to avoid forward refs)
+-- ============================================================
+CREATE TABLE transactions (
+    id SERIAL PRIMARY KEY,
+    account_id INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
+    customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+    transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('deposit', 'withdrawal', 'transfer')),
+    channel VARCHAR(30) NOT NULL CHECK (channel IN ('cash', 'ATM', 'NEFT', 'RTGS', 'IMPS', 'UPI-GPay', 'UPI-PhonePe', 'UPI-Paytm', 'UPI-Other', 'cheque', 'branch')),
+    amount NUMERIC(15, 2) NOT NULL CHECK (amount > 0),
+    balance_after NUMERIC(15, 2) NOT NULL,
+    status VARCHAR(20) DEFAULT 'success' CHECK (status IN ('success', 'failed', 'pending')),
+    reference_number VARCHAR(30) UNIQUE NOT NULL,
+    description TEXT,
+    linked_loan_id INTEGER REFERENCES loans(id) ON DELETE SET NULL,
+    linked_card_id INTEGER REFERENCES credit_cards(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
 -- ============================================================
@@ -121,23 +139,6 @@ CREATE TABLE loan_score (
 );
 
 -- ============================================================
--- CREDIT CARDS
--- ============================================================
-CREATE TABLE credit_cards (
-    id SERIAL PRIMARY KEY,
-    customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
-    card_number VARCHAR(20) NOT NULL,
-    card_number_masked VARCHAR(20) NOT NULL,
-    card_type VARCHAR(20) NOT NULL CHECK (card_type IN ('Visa', 'Mastercard', 'RuPay')),
-    credit_limit NUMERIC(15, 2) NOT NULL,
-    outstanding_balance NUMERIC(15, 2) DEFAULT 0.00,
-    minimum_due NUMERIC(15, 2) DEFAULT 0.00,
-    due_date DATE,
-    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'blocked', 'expired')),
-    issued_at TIMESTAMP DEFAULT NOW()
-);
-
--- ============================================================
 -- CREDIT CARD TRANSACTIONS
 -- ============================================================
 CREATE TABLE credit_card_transactions (
@@ -153,17 +154,33 @@ CREATE TABLE credit_card_transactions (
 );
 
 -- ============================================================
--- INDEXES for performance
+-- ACCOUNT AUDIT LOG
 -- ============================================================
-CREATE INDEX idx_accounts_customer ON accounts(customer_id);
-CREATE INDEX idx_transactions_account ON transactions(account_id);
-CREATE INDEX idx_transactions_customer ON transactions(customer_id);
-CREATE INDEX idx_transactions_type ON transactions(transaction_type);
-CREATE INDEX idx_transactions_date ON transactions(created_at);
-CREATE INDEX idx_loans_customer ON loans(customer_id);
-CREATE INDEX idx_loan_repayments_loan ON loan_repayments(loan_id);
-CREATE INDEX idx_credit_cards_customer ON credit_cards(customer_id);
-CREATE INDEX idx_cc_transactions_card ON credit_card_transactions(card_id);
+CREATE TABLE account_audit_log (
+    id SERIAL PRIMARY KEY,
+    account_id INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
+    account_number VARCHAR(20) NOT NULL,
+    customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+    action VARCHAR(20) NOT NULL CHECK (action IN ('frozen', 'active', 'closed')),
+    previous_status VARCHAR(20) NOT NULL,
+    reason TEXT,
+    performed_by VARCHAR(50) NOT NULL,
+    performed_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================================================
+-- INDEXES
+-- ============================================================
+CREATE INDEX idx_accounts_customer       ON accounts(customer_id);
+CREATE INDEX idx_transactions_account    ON transactions(account_id);
+CREATE INDEX idx_transactions_customer   ON transactions(customer_id);
+CREATE INDEX idx_transactions_type       ON transactions(transaction_type);
+CREATE INDEX idx_transactions_date       ON transactions(created_at);
+CREATE INDEX idx_loans_customer          ON loans(customer_id);
+CREATE INDEX idx_loan_repayments_loan    ON loan_repayments(loan_id);
+CREATE INDEX idx_credit_cards_customer   ON credit_cards(customer_id);
+CREATE INDEX idx_cc_transactions_card    ON credit_card_transactions(card_id);
+CREATE INDEX idx_audit_account           ON account_audit_log(account_id);
 
 -- ============================================================
 -- DEFAULT USERS
