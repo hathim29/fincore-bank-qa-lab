@@ -234,4 +234,4 @@ Full Page Object Model (POM) implementation in progress.
 
 **Hathim Al Ghifari J**
 Senior QA Engineer & Certified ScrumMaster
-[LinkedIn](https://linkedin.com/in/hathimjk3) · [qajourney.net](https://qajourney.net)
+[LinkedIn](https://linkedin.com/in/hathimjk3)
