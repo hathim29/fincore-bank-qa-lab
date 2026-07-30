@@ -4,9 +4,6 @@ export default defineConfig({
     // ── Test directory ─────────────────────────────────────────
     testDir: './tests/specs',
 
-    // ── Global setup — runs once before all tests ──────────────
-    globalSetup: './tests/global-setup.ts',
-
     // ── Base URL — all page.goto('/login.html') resolves to this
     use: {
         baseURL: 'http://localhost:3000',
