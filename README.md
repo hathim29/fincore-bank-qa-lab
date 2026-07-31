@@ -1,3 +1,5 @@
+[![FinCore Bank — Playwright Tests](https://github.com/hathim29/fincore-bank-qa-lab/actions/workflows/playwright.yml/badge.svg)](https://github.com/hathim29/fincore-bank-qa-lab/actions/workflows/playwright.yml)
+
 # FinCore Bank — QA Practice Lab
 
 A full-stack banking application built as a QA automation practice target. Designed to demonstrate real-world quality engineering skills across the complete banking domain — customers, accounts, transactions, loans, credit cards, and role-based access control.
