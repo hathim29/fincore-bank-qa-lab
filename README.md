@@ -1,6 +1,6 @@
-[![FinCore Bank — Playwright Tests](https://github.com/hathim29/fincore-bank-qa-lab/actions/workflows/playwright.yml/badge.svg)](https://github.com/hathim29/fincore-bank-qa-lab/actions/workflows/playwright.yml)
-
 # FinCore Bank — QA Practice Lab
+
+[![Playwright Tests](https://github.com/hathim29/fincore-bank-qa-lab/actions/workflows/playwright.yml/badge.svg)](https://github.com/hathim29/fincore-bank-qa-lab/actions/workflows/playwright.yml)
 
 A full-stack banking application built as a QA automation practice target. Designed to demonstrate real-world quality engineering skills across the complete banking domain — customers, accounts, transactions, loans, credit cards, and role-based access control.
 
@@ -13,7 +13,9 @@ A full-stack banking application built as a QA automation practice target. Desig
 | Frontend | HTML5 / CSS3 / Vanilla JS / Bootstrap 5 |
 | Backend | Node.js + Express.js |
 | Database | PostgreSQL (hosted on Supabase) |
-| Testing | Playwright + TypeScript (POM) |
+| Testing — UI | Playwright + TypeScript (Page Object Model) |
+| Testing — API | Postman + Newman |
+| CI/CD | GitHub Actions |
 | Icons | Tabler Icons |
 
 ---
@@ -27,6 +29,7 @@ A full-stack banking application built as a QA automation practice target. Desig
 - **Loans** — full lifecycle — creation, EMI repayment schedule, loan score, foreclosure, closure
 - **Credit Cards** — issuance, transaction history, full / minimum / custom payment, block / unblock
 - **Role-based access** — admin (full CRUD) and viewer (read-only) roles
+- **Expandable sidebar** — collapsible navigation with tooltips
 
 ---
 
@@ -108,7 +111,7 @@ Navigate to `http://localhost:3000/login.html`
 
 ---
 
-## Running Tests
+## Running Playwright Tests
 
 ### Install Playwright browsers (first time only)
 
@@ -125,7 +128,13 @@ npx playwright test
 ### Run a specific spec
 
 ```bash
-npx playwright test tests/customers.spec.ts
+npx playwright test tests/specs/login.spec.ts
+```
+
+### Run in headed mode (see the browser)
+
+```bash
+npx playwright test --headed
 ```
 
 ### View HTML report
@@ -133,6 +142,68 @@ npx playwright test tests/customers.spec.ts
 ```bash
 npx playwright show-report
 ```
+
+---
+
+## Automation Test Coverage
+
+| Module | Spec File | Tests | Status |
+|---|---|---|---|
+| Login | login.spec.ts | 13 | ✅ Passing |
+| Customers | customers.spec.ts | 19 | ✅ Passing |
+| Accounts | accounts.spec.ts | 23 | ✅ Passing |
+| Transactions | transactions.spec.ts | 21 | ✅ Passing |
+| Loans | loans.spec.ts | 23 | ✅ Passing |
+| Credit Cards | credit-cards.spec.ts | 27 | ✅ Passing |
+| **Total** | | **126** | **✅ All Passing** |
+
+Full Page Object Model (POM) architecture — every page has a dedicated Page Object class with all selectors and actions encapsulated. Tests use `data-testid` selectors throughout.
+
+---
+
+## API Testing — Postman
+
+A complete Postman collection is included covering all 7 API modules with 37 requests and 215+ tests.
+
+### Import into Postman
+
+1. Open Postman
+2. Click **Import**
+3. Select `FinCore_Bank_API_Tests.postman_collection.json`
+4. Also import `FinCore_Bank_Local.postman_environment.json`
+5. Select the **FinCore Bank — Local** environment from the top-right dropdown
+6. Click **Run collection**
+
+### Coverage
+
+| Folder | Requests | Tests |
+|---|---|---|
+| Dashboard | 3 | 9 |
+| Customers | 6 | 18 |
+| Accounts | 7 | 16 |
+| Loans | 6 | 14 |
+| Loan Repayments | 5 | 12 |
+| Credit Cards | 9 | 22 |
+| Transactions | 7 | 18 |
+| **Total** | **37** | **109+** |
+
+---
+
+## CI/CD
+
+GitHub Actions runs the full Playwright test suite on every push to main.
+
+**Pipeline steps:**
+1. Checkout code
+2. Set up Node.js 20
+3. Install dependencies
+4. Install Playwright browsers (Chromium)
+5. Create .env from GitHub secret
+6. Seed database
+7. Run 126 Playwright tests
+8. Upload HTML report as artifact
+
+The `DATABASE_URL` is stored as a GitHub Actions secret — never committed to the repository.
 
 ---
 
@@ -148,7 +219,7 @@ fincore-bank-qa-lab/
 │   ├── css/
 │   │   └── style.css        Shared design system — dark sidebar layout
 │   ├── js/
-│   │   └── sidebar.js       Expandable sidebar toggle (shared across all pages)
+│   │   └── sidebar.js       Expandable sidebar toggle
 │   ├── login.html
 │   ├── dashboard.html
 │   ├── customers.html
@@ -165,12 +236,34 @@ fincore-bank-qa-lab/
 │   ├── transactions.js
 │   └── dashboard.js
 ├── tests/
-│   └── customers.spec.ts    9 test cases — all passing
-├── .env.example             Environment variable template
+│   ├── auth/                Saved auth state (gitignored)
+│   ├── fixtures/
+│   │   └── testData.ts      All test constants
+│   ├── pages/               Page Object Model classes
+│   │   ├── BasePage.ts
+│   │   ├── LoginPage.ts
+│   │   ├── CustomersPage.ts
+│   │   ├── AccountsPage.ts
+│   │   ├── TransactionsPage.ts
+│   │   ├── LoansPage.ts
+│   │   └── CreditCardsPage.ts
+│   └── specs/               Test specification files
+│       ├── login.spec.ts
+│       ├── customers.spec.ts
+│       ├── accounts.spec.ts
+│       ├── transactions.spec.ts
+│       ├── loans.spec.ts
+│       └── credit-cards.spec.ts
+├── .github/
+│   └── workflows/
+│       └── playwright.yml   GitHub Actions CI pipeline
+├── FinCore_Bank_API_Tests.postman_collection.json
+├── FinCore_Bank_Local.postman_environment.json
+├── .env.example
 ├── .gitignore
 ├── package.json
 ├── playwright.config.ts
-└── server.js                Entry point
+└── server.js                Entry point — npm run dev
 ```
 
 ---
@@ -190,13 +283,15 @@ fincore-bank-qa-lab/
 | POST | /api/loans | Create new loan |
 | PUT | /api/loans/:id | Update loan status (foreclose/close) |
 | POST | /api/loan-repayments | Record EMI payment |
+| GET | /api/loan-repayments | Get repayment history for a loan |
 | GET | /api/credit-cards | Paginated credit cards |
 | POST | /api/credit-cards | Issue new credit card |
 | POST | /api/credit-cards/:id/payment | Make payment (full/minimum/custom) |
 | PUT | /api/credit-cards/:id/status | Block or unblock card |
 | GET | /api/transactions | Paginated transactions with filters |
-| POST | /api/transactions | Create new transaction (admin only) |
+| POST | /api/transactions | Create new transaction |
 | GET | /api/dashboard/stats | Dashboard summary counts |
+| GET | /api/dashboard/recent-transactions | Recent transactions for dashboard |
 | GET | /api/dashboard/alerts | Overdue loans and cards due soon |
 
 ---
@@ -213,22 +308,6 @@ These are intentional simplifications for a QA practice lab — not production b
 | Transfer type has no recipient account | Transfer is a transaction type for filter/display testing only |
 | Credit card due date does not advance on billing cycle | Static field — Generate Statement feature planned |
 | Loan IDs are numeric | FNCB+type+initial+4digit format planned for next iteration |
-
----
-
-## Automation Test Coverage (In Progress)
-
-| Module | Spec File | Status |
-|---|---|---|
-| Login | login.spec.ts | Planned |
-| Dashboard | dashboard.spec.ts | Planned |
-| Customers | customers.spec.ts | ✅ 9 tests passing |
-| Accounts | accounts.spec.ts | Planned |
-| Transactions | transactions.spec.ts | Planned |
-| Loans | loans.spec.ts | Planned |
-| Credit Cards | credit-cards.spec.ts | Planned |
-
-Full Page Object Model (POM) implementation in progress.
 
 ---
 
