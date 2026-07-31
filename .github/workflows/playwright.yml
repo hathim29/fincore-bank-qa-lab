@@ -21,7 +21,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
 
       # ── 3. Install dependencies ───────────────────────────────
@@ -36,17 +36,25 @@ jobs:
       - name: Create .env file
         run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
 
-      # ── 6. Seed the database ──────────────────────────────────
+      # ── 6. Force IPv4 for Supabase connection ─────────────────
+      - name: Force IPv4 DNS resolution
+        run: |
+          SUPABASE_HOST="db.wltinzairppaukwafqja.supabase.co"
+          IPV4=$(getent ahostsv4 $SUPABASE_HOST | head -1 | awk '{print $1}')
+          echo "Resolved $SUPABASE_HOST to IPv4: $IPV4"
+          echo "$IPV4 $SUPABASE_HOST" | sudo tee -a /etc/hosts
+
+      # ── 7. Seed the database ──────────────────────────────────
       - name: Seed database
         run: node db/seed.js
 
-      # ── 7. Run Playwright tests ───────────────────────────────
+      # ── 8. Run Playwright tests ───────────────────────────────
       - name: Run Playwright tests
-        run: npx playwright test
+        run: npx playwright test --reporter=list
         env:
           CI: true
 
-      # ── 8. Upload HTML report on failure ─────────────────────
+      # ── 9. Upload HTML report — always runs ───────────────────
       - name: Upload test report
         uses: actions/upload-artifact@v4
         if: always()
