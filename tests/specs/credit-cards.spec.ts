@@ -25,9 +25,9 @@ test.describe('Credit Cards Page — Admin', () => {
 
     // ── Happy Path ─────────────────────────────────────────────
 
-    test('should load credit cards table with stat cards', async () => {
+    test('should load credit cards table', async () => {
         await ccPage.assertTableVisible();
-        await ccPage.assertStatCardsLoaded();
+        await ccPage.assertTotalCountContains('cards found');
     });
 
     test('should show correct total count', async () => {

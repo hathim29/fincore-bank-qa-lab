@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinCore Bank — Customer Onboarding</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        .onboard-wrapper {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .onboard-stepper {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 32px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .step-circle {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700;
+            border: 2px solid var(--border-color);
+            background: #fff;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+            background: #005175;
+            border-color: #005175;
+            color: #fff;
+        }
+
+        .step.done .step-circle {
+            background: #26b2ad;
+            border-color: #26b2ad;
+            color: #fff;
+        }
+
+        .step-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .step.active .step-label { color: #005175; font-weight: 600; }
+        .step.done .step-label   { color: #26b2ad; }
+
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: var(--border-color);
+            margin: 0 8px;
+            transition: background 0.3s;
+        }
+
+        .step-line.done { background: #26b2ad; }
+
+        .onboard-section {
+            display: none;
+        }
+
+        .onboard-section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+        .form-grid.full  { grid-template-columns: 1fr; }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group.span2 { grid-column: span 2; }
+        .form-group.span3 { grid-column: span 3; }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .form-label .optional {
+            font-weight: 400;
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .form-control {
+            padding: 9px 12px;
+            border: 1.5px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 13px;
+            color: var(--text-primary);
+            background: #fff;
+            transition: border-color 0.15s;
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+        }
+
+        .form-control.error { border-color: var(--red); }
+        .form-control.success { border-color: var(--green); }
+
+        .field-error {
+            font-size: 11px;
+            color: var(--red);
+            display: none;
+        }
+
+        .field-error.show { display: block; }
+
+        .field-hint {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Radio & Checkbox groups */
+        .radio-group, .checkbox-group {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            padding: 6px 0;
+        }
+
+        .radio-item, .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .radio-item input[type="radio"],
+        .checkbox-item input[type="checkbox"] {
+            width: 16px; height: 16px;
+            accent-color: var(--blue);
+            cursor: pointer;
+        }
+
+        /* KYC badge */
+        .kyc-preview {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .kyc-verified { background: #DCFCE7; color: #15803D; }
+        .kyc-pending  { background: #FEF3C7; color: #D97706; }
+        .kyc-rejected { background: #FEE2E2; color: #B91C1C; }
+
+        /* Processing animation */
+        .processing-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,22,35,0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .processing-overlay.show {
+            display: flex;
+        }
+
+        .processing-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px 48px;
+            text-align: center;
+            max-width: 420px;
+        }
+
+        .processing-spinner {
+            width: 56px; height: 56px;
+            border: 4px solid #E2E8F0;
+            border-top-color: var(--blue);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .processing-steps {
+            list-style: none;
+            text-align: left;
+            margin-top: 16px;
+        }
+
+        .processing-steps li {
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .processing-steps li.done { color: var(--green); }
+        .processing-steps li.active { color: var(--blue); font-weight: 600; }
+
+        /* Success screen */
+        .success-card {
+            text-align: center;
+            padding: 48px 32px;
+        }
+
+        .success-icon {
+            width: 72px; height: 72px;
+            background: #DCFCE7;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px;
+            color: #15803D;
+            margin: 0 auto 20px;
+        }
+
+        .account-number-display {
+            font-size: 28px;
+            font-weight: 800;
+            font-family: monospace;
+            color: var(--blue);
+            background: var(--blue-light);
+            padding: 12px 24px;
+            border-radius: 10px;
+            display: inline-block;
+            margin: 12px 0 20px;
+            letter-spacing: 2px;
+        }
+
+        .onboard-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 32px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" data-testid="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">F</div>
+            <div><div class="logo-text">FinCore Bank</div><div class="logo-sub">QA Practice Lab</div></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <a href="dashboard.html" class="nav-item" data-testid="nav-dashboard"><i class="ti ti-layout-dashboard nav-icon"></i><span>Dashboard</span></a>
+            <a href="accounts.html" class="nav-item" data-testid="nav-accounts"><i class="ti ti-building-bank nav-icon"></i><span>Accounts</span></a>
+            <a href="transactions.html" class="nav-item" data-testid="nav-transactions"><i class="ti ti-arrows-exchange nav-icon"></i><span>Transactions</span></a>
+            <div class="nav-section-label">Products</div>
+            <a href="customers.html" class="nav-item active" data-testid="nav-customers"><i class="ti ti-users nav-icon"></i><span>Customers</span></a>
+            <a href="loans.html" class="nav-item" data-testid="nav-loans"><i class="ti ti-receipt nav-icon"></i><span>Loans</span></a>
+            <a href="credit-cards.html" class="nav-item" data-testid="nav-credit-cards"><i class="ti ti-credit-card nav-icon"></i><span>Credit Cards</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="login.html" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <a href="customers.html" class="btn btn-outline btn-sm" style="margin-right:8px;">
+                    <i class="ti ti-arrow-left"></i> Back
+                </a>
+                <div>
+                    <div class="page-title">Customer Onboarding</div>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <span id="topbarUser" style="font-size:12px;color:var(--text-muted);"></span>
+                <div class="topbar-avatar" id="topbarAvatar">A</div>
+            </div>
+        </header>
+
+        <div class="page-body">
+            <div class="onboard-wrapper">
+
+                <!-- STEPPER -->
+                <div class="onboard-stepper" id="stepper">
+                    <div class="step active" id="step1">
+                        <div class="step-circle">1</div>
+                        <div class="step-label">Personal Details</div>
+                    </div>
+                    <div class="step-line" id="line1"></div>
+                    <div class="step" id="step2">
+                        <div class="step-circle">2</div>
+                        <div class="step-label">Identity & KYC</div>
+                    </div>
+                    <div class="step-line" id="line2"></div>
+                    <div class="step" id="step3">
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Account Setup</div>
+                    </div>
+                    <div class="step-line" id="line3"></div>
+                    <div class="step" id="step4">
+                        <div class="step-circle"><i class="ti ti-check" style="font-size:14px;"></i></div>
+                        <div class="step-label">Confirmation</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body" style="padding:28px 32px;">
+
+                        <!-- STEP 1: PERSONAL DETAILS -->
+                        <div class="onboard-section active" id="section1">
+                            <div class="section-title">
+                                <i class="ti ti-user" style="color:#26b2ad;"></i>
+                                Personal Details
+                            </div>
+                            <div class="form-grid three" style="margin-bottom:16px;">
+                                <div class="form-group">
+                                    <label class="form-label">First Name *</label>
+                                    <input type="text" class="form-control" id="firstName" placeholder="e.g. Arjun">
+                                    <span class="field-error" id="err-firstName">First name is required</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Middle Name <span class="optional">(optional)</span></label>
+                                    <input type="text" class="form-control" id="middleName" placeholder="e.g. Kumar">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Last Name *</label>
+                                    <input type="text" class="form-control" id="lastName" placeholder="e.g. Sharma">
+                                    <span class="field-error" id="err-lastName">Last name is required</span>
+                                </div>
+                            </div>
+                            <div class="form-grid" style="margin-bottom:16px;">
+                                <div class="form-group">
+                                    <label class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control" id="email" placeholder="arjun.sharma@gmail.com">
+                                    <span class="field-error" id="err-email">Valid email is required</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Phone Number *</label>
+                                    <input type="tel" class="form-control" id="phone" placeholder="9876543210" maxlength="10">
+                                    <span class="field-error" id="err-phone">Valid 10-digit phone is required</span>
+                                </div>
+                            </div>
+                            <div class="form-grid" style="margin-bottom:16px;">
+                                <div class="form-group">
+                                    <label class="form-label">Date of Birth *</label>
+                                    <input type="date" class="form-control" id="dob">
+                                    <span class="field-error" id="err-dob">Date of birth is required</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">City *</label>
+                                    <input type="text" class="form-control" id="city" placeholder="e.g. Chennai">
+                                    <span class="field-error" id="err-city">City is required</span>
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom:16px;">
+                                <label class="form-label">Address *</label>
+                                <textarea class="form-control" id="address" rows="2"
+                                    placeholder="Door no, Street, Area, City, State, Pincode"
+                                    style="resize:vertical;"></textarea>
+                                <span class="field-error" id="err-address">Address is required</span>
+                            </div>
+                            <div class="form-grid" style="margin-bottom:16px;">
+                                <div class="form-group">
+                                    <label class="form-label">Gender *</label>
+                                    <div class="radio-group">
+                                        <label class="radio-item">
+                                            <input type="radio" name="gender" value="male"> Male
+                                        </label>
+                                        <label class="radio-item">
+                                            <input type="radio" name="gender" value="female"> Female
+                                        </label>
+                                        <label class="radio-item">
+                                            <input type="radio" name="gender" value="other"> Other
+                                        </label>
+                                    </div>
+                                    <span class="field-error" id="err-gender">Please select gender</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Marital Status *</label>
+                                    <div class="radio-group">
+                                        <label class="radio-item">
+                                            <input type="radio" name="marital" value="single"> Single
+                                        </label>
+                                        <label class="radio-item">
+                                            <input type="radio" name="marital" value="married"> Married
+                                        </label>
+                                        <label class="radio-item">
+                                            <input type="radio" name="marital" value="divorced"> Divorced
+                                        </label>
+                                    </div>
+                                    <span class="field-error" id="err-marital">Please select marital status</span>
+                                </div>
+                            </div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Nationality *</label>
+                                    <select class="form-control" id="nationality">
+                                        <option value="">Select nationality</option>
+                                        <option value="Indian" selected>Indian</option>
+                                        <option value="NRI">NRI (Non-Resident Indian)</option>
+                                        <option value="Foreign">Foreign National</option>
+                                    </select>
+                                    <span class="field-error" id="err-nationality">Nationality is required</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Religion <span class="optional">(optional)</span></label>
+                                    <select class="form-control" id="religion">
+                                        <option value="">Prefer not to say</option>
+                                        <option value="Hindu">Hindu</option>
+                                        <option value="Muslim">Muslim</option>
+                                        <option value="Christian">Christian</option>
+                                        <option value="Sikh">Sikh</option>
+                                        <option value="Buddhist">Buddhist</option>
+                                        <option value="Jain">Jain</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 2: IDENTITY & KYC -->
+                        <div class="onboard-section" id="section2">
+                            <div class="section-title">
+                                <i class="ti ti-id-badge" style="color:#26b2ad;"></i>
+                                Identity & KYC Documents
+                            </div>
+                            <div class="form-group" style="margin-bottom:20px;">
+                                <label class="form-label">PAN Card Number</label>
+                                <input type="text" class="form-control" id="panNumber"
+                                    maxlength="10"
+                                    style="text-transform:uppercase;letter-spacing:1px;">
+                                <span class="field-error" id="err-pan">Invalid PAN format. Must be 5 letters, 4 digits, 1 letter</span>
+                            </div>
+                            <div class="form-group" style="margin-bottom:20px;">
+                                <label class="form-label">Aadhaar Number</label>
+                                <input type="text" class="form-control" id="aadhaarNumber"
+                                    maxlength="14">
+                                <span class="field-error" id="err-aadhaar">Invalid Aadhaar. Must be 12 digits</span>
+                            </div>
+
+                            <!-- KYC rejection warning — only shows when both fields empty -->
+                            <div id="kycWarning" style="display:none;background:#FEE2E2;border:1.5px solid #FCA5A5;border-radius:8px;padding:12px 16px;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <i class="ti ti-alert-circle" style="color:#B91C1C;font-size:18px;"></i>
+                                    <span style="font-size:13px;font-weight:600;color:#B91C1C;">
+                                        At least one document is required. Please provide PAN Card or Aadhaar number to proceed.
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 3: ACCOUNT SETUP -->
+                        <div class="onboard-section" id="section3">
+                            <div class="section-title">
+                                <i class="ti ti-building-bank" style="color:#26b2ad;"></i>
+                                Account Setup
+                            </div>
+                            <div class="form-grid" style="margin-bottom:16px;">
+                                <div class="form-group">
+                                    <label class="form-label">Account Type *</label>
+                                    <div class="radio-group" style="flex-direction:column;gap:10px;">
+                                        <label class="radio-item" style="padding:12px 14px;border:1.5px solid var(--border-color);border-radius:8px;cursor:pointer;" id="accTypeSavings">
+                                            <input type="radio" name="accountType" value="savings" checked>
+                                            <div>
+                                                <div style="font-weight:600;">Savings Account</div>
+                                                <div style="font-size:11px;color:var(--text-muted);">Earn interest, limited withdrawals</div>
+                                            </div>
+                                        </label>
+                                        <label class="radio-item" style="padding:12px 14px;border:1.5px solid var(--border-color);border-radius:8px;cursor:pointer;" id="accTypeCurrent">
+                                            <input type="radio" name="accountType" value="current">
+                                            <div>
+                                                <div style="font-weight:600;">Current Account</div>
+                                                <div style="font-size:11px;color:var(--text-muted);">Unlimited transactions, no interest</div>
+                                            </div>
+                                        </label>
+                                        <label class="radio-item" style="padding:12px 14px;border:1.5px solid var(--border-color);border-radius:8px;cursor:pointer;" id="accTypeSalary">
+                                            <input type="radio" name="accountType" value="salary">
+                                            <div>
+                                                <div style="font-weight:600;">Salary Account</div>
+                                                <div style="font-size:11px;color:var(--text-muted);">Linked to employer payroll</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="form-group" style="margin-bottom:16px;">
+                                        <label class="form-label">Initial Deposit (₹) *</label>
+                                        <input type="number" class="form-control" id="initialBalance"
+                                            placeholder="Minimum ₹500" min="0" value="1000">
+                                        <span class="field-error" id="err-balance">Initial deposit must be ₹0 or more</span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Preferred Branch</label>
+                                        <select class="form-control" id="branch">
+                                            <option value="Chennai Main">Chennai — Main Branch</option>
+                                            <option value="Mumbai Central">Mumbai — Central Branch</option>
+                                            <option value="Delhi North">Delhi — North Branch</option>
+                                            <option value="Bengaluru Tech">Bengaluru — Tech Park Branch</option>
+                                            <option value="Hyderabad">Hyderabad — Hitech City Branch</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-top:16px;">
+                                        <label class="form-label">Additional Services</label>
+                                        <div class="checkbox-group" style="flex-direction:column;gap:8px;">
+                                            <label class="checkbox-item">
+                                                <input type="checkbox" id="chkNetBanking" checked>
+                                                Internet Banking
+                                            </label>
+                                            <label class="checkbox-item">
+                                                <input type="checkbox" id="chkMobileBanking" checked>
+                                                Mobile Banking
+                                            </label>
+                                            <label class="checkbox-item">
+                                                <input type="checkbox" id="chkDebitCard">
+                                                Debit Card
+                                            </label>
+                                            <label class="checkbox-item">
+                                                <input type="checkbox" id="chkSms">
+                                                SMS Alerts
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 4: REVIEW & CONFIRM -->
+                        <div class="onboard-section" id="section4">
+                            <div class="section-title">
+                                <i class="ti ti-clipboard-check" style="color:#26b2ad;"></i>
+                                Review & Confirm
+                            </div>
+                            <div id="reviewContent" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                                <!-- Populated by JS -->
+                            </div>
+                            <div style="background:#FEF3C7;border:1.5px solid #FCD34D;border-radius:8px;padding:14px 16px;margin-top:20px;">
+                                <div style="display:flex;align-items:flex-start;gap:10px;">
+                                    <i class="ti ti-alert-triangle" style="color:#D97706;font-size:18px;flex-shrink:0;margin-top:2px;"></i>
+                                    <div>
+                                        <div style="font-size:13px;font-weight:600;color:#92400E;">Declaration</div>
+                                        <div style="font-size:12px;color:#92400E;margin-top:4px;">I hereby declare that the information provided is true and correct to the best of my knowledge. I agree to the terms and conditions of FinCore Bank.</div>
+                                    </div>
+                                </div>
+                                <label class="checkbox-item" style="margin-top:12px;">
+                                    <input type="checkbox" id="declaration">
+                                    <span style="font-size:13px;font-weight:600;color:#92400E;">I agree to the above declaration</span>
+                                </label>
+                                <span class="field-error" id="err-declaration" style="margin-top:6px;">Please accept the declaration to proceed</span>
+                            </div>
+                        </div>
+
+                        <!-- NAVIGATION BUTTONS -->
+                        <div class="onboard-nav" id="onboardNav">
+                            <button class="btn btn-outline" id="btnBack" style="display:none;" onclick="goBack()">
+                                <i class="ti ti-arrow-left"></i> Back
+                            </button>
+                            <div style="flex:1;"></div>
+                            <button class="btn btn-primary" id="btnNext" onclick="goNext()">
+                                Next <i class="ti ti-arrow-right"></i>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PROCESSING OVERLAY -->
+<div class="processing-overlay" id="processingOverlay">
+    <div class="processing-card">
+        <div class="processing-spinner" id="processingSpinner"></div>
+        <div style="font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:8px;" id="processingTitle">
+            Processing Your Application
+        </div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">
+            Please wait while we set up your account...
+        </div>
+        <ul class="processing-steps" id="processingSteps">
+            <li id="pStep1"><i class="ti ti-circle"></i> Validating customer details</li>
+            <li id="pStep2"><i class="ti ti-circle"></i> Verifying KYC documents</li>
+            <li id="pStep3"><i class="ti ti-circle"></i> Creating customer profile</li>
+            <li id="pStep4"><i class="ti ti-circle"></i> Opening bank account</li>
+            <li id="pStep5"><i class="ti ti-circle"></i> Generating account number</li>
+            <li id="pStep6"><i class="ti ti-circle"></i> Activating services</li>
+        </ul>
+    </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="processing-overlay" id="successOverlay">
+    <div class="processing-card success-card">
+        <div class="success-icon">
+            <i class="ti ti-circle-check"></i>
+        </div>
+        <div style="font-size:22px;font-weight:800;color:var(--text-primary);margin-bottom:8px;">
+            Account Created Successfully!
+        </div>
+        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:4px;">
+            Welcome to FinCore Bank, <strong id="successName"></strong>
+        </div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+            Your account number is
+        </div>
+        <div class="account-number-display" id="successAccountNumber">—</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:24px;" id="successDetails"></div>
+        <div style="display:flex;gap:12px;justify-content:center;">
+            <a href="customers.html" class="btn btn-outline">
+                <i class="ti ti-users"></i> Go to Customers
+            </a>
+            <a href="accounts.html" class="btn btn-primary">
+                <i class="ti ti-building-bank"></i> View Accounts
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="js/sidebar.js"></script>
+<script>
+const API = 'http://localhost:3000/api';
+const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
+if (!user.username) window.location.href = 'login.html';
+if (user.role !== 'admin') window.location.href = 'customers.html'; // admin only
+document.getElementById('topbarUser').textContent = user.username || '';
+document.getElementById('topbarAvatar').textContent = (user.username || 'A')[0].toUpperCase();
+
+let currentStep = 1;
+
+// ── KYC Validation ─────────────────────────────────────────────
+function updateKycWarning(showWarning = false) {
+    const pan     = document.getElementById('panNumber').value.trim().toUpperCase();
+    const aadhaar = document.getElementById('aadhaarNumber').value.replace(/\s/g,'').trim();
+    const hasPan  = pan.length === 10 && /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan);
+    const hasAad  = aadhaar.length === 12 && /^\d{12}$/.test(aadhaar);
+    const warning = document.getElementById('kycWarning');
+    const btnNext = document.getElementById('btnNext');
+    const isEmpty = pan.length === 0 && aadhaar.length === 0;
+
+    if (isEmpty) {
+        // Show warning only if user clicked Next
+        warning.style.display = showWarning ? 'block' : 'none';
+        btnNext.disabled = false; // not disabled — clicking triggers warning instead
+    } else {
+        warning.style.display = 'none';
+        btnNext.disabled = false;
+        btnNext.style.opacity = '1';
+        btnNext.style.cursor = 'pointer';
+    }
+    return !isEmpty; // returns true if at least one field has value
+}
+
+document.getElementById('panNumber').addEventListener('input', function() {
+    this.value = this.value.toUpperCase();
+    updateKycWarning(false);
+});
+document.getElementById('aadhaarNumber').addEventListener('input', function() {
+    let val = this.value.replace(/\D/g,'').substring(0,12);
+    this.value = val.replace(/(\d{4})(?=\d)/g,'$1 ');
+    updateKycWarning(false);
+});
+
+// ── Highlight selected account type ───────────────────────────
+document.querySelectorAll('input[name="accountType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('[id^="accType"]').forEach(el => el.style.borderColor = 'var(--border-color)');
+        const map = { savings:'accTypeSavings', current:'accTypeCurrent', salary:'accTypeSalary' };
+        if (map[this.value]) document.getElementById(map[this.value]).style.borderColor = 'var(--blue)';
+    });
+});
+document.getElementById('accTypeSavings').style.borderColor = 'var(--blue)';
+
+// ── Validation ─────────────────────────────────────────────────
+function showError(id, show) {
+    const el = document.getElementById('err-' + id);
+    const input = document.getElementById(id);
+    if (el) el.classList.toggle('show', show);
+    if (input) input.classList.toggle('error', show);
+    return show;
+}
+
+function validateStep(step) {
+    let hasError = false;
+
+    if (step === 1) {
+        hasError |= showError('firstName', !document.getElementById('firstName').value.trim());
+        hasError |= showError('lastName',  !document.getElementById('lastName').value.trim());
+        const email = document.getElementById('email').value.trim();
+        hasError |= showError('email', !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+        const phone = document.getElementById('phone').value.trim();
+        hasError |= showError('phone', !phone || !/^\d{10}$/.test(phone));
+        hasError |= showError('dob',     !document.getElementById('dob').value);
+        hasError |= showError('city',    !document.getElementById('city').value.trim());
+        hasError |= showError('address', !document.getElementById('address').value.trim());
+        hasError |= showError('gender',  !document.querySelector('input[name="gender"]:checked'));
+        hasError |= showError('marital', !document.querySelector('input[name="marital"]:checked'));
+        hasError |= showError('nationality', !document.getElementById('nationality').value);
+    }
+
+    if (step === 2) {
+        const pan = document.getElementById('panNumber').value.trim().toUpperCase();
+        const aadhaar = document.getElementById('aadhaarNumber').value.replace(/\s/g,'');
+        // At least one must be provided
+        if (!pan && !aadhaar) {
+            updateKycWarning(true); // show warning now
+            return false;
+        }
+        if (pan) hasError |= showError('pan', !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan));
+        else showError('pan', false);
+        if (aadhaar) hasError |= showError('aadhaar', !/^\d{12}$/.test(aadhaar));
+        else showError('aadhaar', false);
+    }
+
+    if (step === 3) {
+        const bal = parseFloat(document.getElementById('initialBalance').value);
+        hasError |= showError('balance', isNaN(bal) || bal < 0);
+    }
+
+    if (step === 4) {
+        const decl = document.getElementById('declaration').checked;
+        const errEl = document.getElementById('err-declaration');
+        if (!decl) { errEl.classList.add('show'); hasError = true; }
+        else errEl.classList.remove('show');
+    }
+
+    return !hasError;
+}
+
+// ── Step navigation ────────────────────────────────────────────
+function setStep(n) {
+    // Update sections
+    document.querySelectorAll('.onboard-section').forEach((s,i) => {
+        s.classList.toggle('active', i+1 === n);
+    });
+
+    // Update stepper
+    for (let i = 1; i <= 4; i++) {
+        const step = document.getElementById('step'+i);
+        const line = document.getElementById('line'+i);
+        if (i < n)  { step.className = 'step done'; if(line) line.classList.add('done'); }
+        if (i === n){ step.className = 'step active'; }
+        if (i > n)  { step.className = 'step'; if(line) line.classList.remove('done'); }
+    }
+
+    // Update buttons
+    document.getElementById('btnBack').style.display = n > 1 ? 'inline-flex' : 'none';
+    const btnNext = document.getElementById('btnNext');
+    btnNext.innerHTML = n === 4
+        ? '<i class="ti ti-check"></i> Submit Application'
+        : 'Next <i class="ti ti-arrow-right"></i>';
+    btnNext.disabled = false;
+    btnNext.style.opacity = '1';
+    btnNext.style.cursor = 'pointer';
+
+    currentStep = n;
+
+    // Trigger KYC warning check when arriving at step 2 — hide warning by default
+    if (n === 2) updateKycWarning(false);
+
+    // Populate review on step 4
+    if (n === 4) populateReview();
+}
+
+function goNext() {
+    if (!validateStep(currentStep)) return;
+    if (currentStep === 4) { submitApplication(); return; }
+    setStep(currentStep + 1);
+}
+
+function goBack() {
+    if (currentStep > 1) setStep(currentStep - 1);
+}
+
+// ── Review summary ─────────────────────────────────────────────
+function populateReview() {
+    const firstName  = document.getElementById('firstName').value.trim();
+    const middleName = document.getElementById('middleName').value.trim();
+    const lastName   = document.getElementById('lastName').value.trim();
+    const fullName   = [firstName, middleName, lastName].filter(Boolean).join(' ');
+    const email      = document.getElementById('email').value.trim();
+    const phone      = document.getElementById('phone').value.trim();
+    const dob        = document.getElementById('dob').value;
+    const city       = document.getElementById('city').value.trim();
+    const address    = document.getElementById('address').value.trim();
+    const gender     = document.querySelector('input[name="gender"]:checked')?.value || '—';
+    const marital    = document.querySelector('input[name="marital"]:checked')?.value || '—';
+    const nationality= document.getElementById('nationality').value;
+    const pan        = document.getElementById('panNumber').value.trim().toUpperCase();
+    const aadhaar    = document.getElementById('aadhaarNumber').value.replace(/\s/g,'').trim();
+    const hasPan     = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan);
+    const hasAad     = /^\d{12}$/.test(aadhaar);
+    const kyc        = hasPan && hasAad ? 'Verified' : (hasPan || hasAad ? 'Pending' : 'Rejected');
+    const kycStatus  = kyc;
+    const accType    = document.querySelector('input[name="accountType"]:checked')?.value || 'savings';
+    const balance    = document.getElementById('initialBalance').value;
+    const branch     = document.getElementById('branch').value;
+
+    const reviewItems = [
+        { label: 'Full Name',      value: fullName },
+        { label: 'Email',          value: email },
+        { label: 'Phone',          value: phone },
+        { label: 'Date of Birth',  value: dob },
+        { label: 'City',           value: city },
+        { label: 'Gender',         value: gender.charAt(0).toUpperCase() + gender.slice(1) },
+        { label: 'Marital Status', value: marital.charAt(0).toUpperCase() + marital.slice(1) },
+        { label: 'Nationality',    value: nationality },
+        { label: 'PAN Card',       value: pan },
+        { label: 'Aadhaar',        value: aadhaar },
+        { label: 'KYC Status',     value: kycStatus },
+        { label: 'Account Type',   value: accType.charAt(0).toUpperCase() + accType.slice(1) },
+        { label: 'Initial Deposit',value: `₹${parseFloat(balance||0).toLocaleString('en-IN')}` },
+        { label: 'Branch',         value: branch },
+    ];
+
+    document.getElementById('reviewContent').innerHTML = reviewItems.map(item => `
+        <div style="padding:10px 14px;background:var(--bg-page);border-radius:8px;">
+            <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${item.label}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${item.value}</div>
+        </div>
+    `).join('');
+}
+
+// ── Submit application ─────────────────────────────────────────
+async function submitApplication() {
+    const overlay = document.getElementById('processingOverlay');
+    overlay.classList.add('show');
+
+    const steps = ['pStep1','pStep2','pStep3','pStep4','pStep5','pStep6'];
+    const durations = [2000, 3000, 4000, 5000, 3000, 3000];
+
+    // Animate processing steps
+    for (let i = 0; i < steps.length; i++) {
+        const el = document.getElementById(steps[i]);
+        el.className = 'active';
+        el.innerHTML = `<i class="ti ti-loader" style="animation:spin 0.9s linear infinite;"></i> ${el.textContent.trim()}`;
+        await new Promise(r => setTimeout(r, durations[i]));
+        el.className = 'done';
+        el.innerHTML = `<i class="ti ti-circle-check"></i> ${el.textContent.trim()}`;
+    }
+
+    // Build customer data
+    const firstName  = document.getElementById('firstName').value.trim();
+    const middleName = document.getElementById('middleName').value.trim();
+    const lastName   = document.getElementById('lastName').value.trim();
+    const fullName   = [firstName, middleName, lastName].filter(Boolean).join(' ');
+    const pan        = document.getElementById('panNumber').value.trim().toUpperCase();
+    const aadhaar    = document.getElementById('aadhaarNumber').value.replace(/\s/g,'').trim();
+    const hasPan     = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan);
+    const hasAad     = /^\d{12}$/.test(aadhaar);
+    const kyc        = hasPan && hasAad ? 'verified' : (hasPan || hasAad ? 'pending' : 'rejected');
+    const accType    = document.querySelector('input[name="accountType"]:checked')?.value || 'savings';
+    const balance    = parseFloat(document.getElementById('initialBalance').value || 0);
+
+    try {
+        // Create customer
+        const custRes = await fetch(`${API}/customers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name:       fullName,
+                email:      document.getElementById('email').value.trim(),
+                phone:      document.getElementById('phone').value.trim(),
+                city:       document.getElementById('city').value.trim(),
+                kyc_status: kyc
+            })
+        });
+        const customer = await custRes.json();
+        if (!custRes.ok) throw new Error(customer.error || 'Failed to create customer');
+
+        // Create account
+        const accRes = await fetch(`${API}/accounts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                customer_id:  customer.id,
+                account_type: accType,
+                balance:      balance
+            })
+        });
+        const account = await accRes.json();
+        if (!accRes.ok) throw new Error(account.error || 'Failed to create account');
+
+        // Show success
+        overlay.classList.remove('show');
+        document.getElementById('successName').textContent = firstName;
+        document.getElementById('successAccountNumber').textContent = account.account_number;
+        document.getElementById('successDetails').textContent =
+            `${accType.charAt(0).toUpperCase() + accType.slice(1)} Account · KYC: ${kyc.charAt(0).toUpperCase() + kyc.slice(1)} · Initial Balance: ₹${balance.toLocaleString('en-IN')}`;
+        document.getElementById('successOverlay').classList.add('show');
+
+    } catch(err) {
+        overlay.classList.remove('show');
+        alert('Error: ' + err.message);
+    }
+}
+</script>
+</body>
+</html>

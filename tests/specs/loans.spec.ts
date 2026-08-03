@@ -25,9 +25,9 @@ test.describe('Loans Page — Admin', () => {
 
     // ── Happy Path ─────────────────────────────────────────────
 
-    test('should load loans table with stat cards', async () => {
+    test('should load loans table', async () => {
         await loansPage.assertTableVisible();
-        await loansPage.assertStatCardsLoaded();
+        await loansPage.assertTotalCountContains('loans found');
     });
 
     test('should show correct total count', async () => {

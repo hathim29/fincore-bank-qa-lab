@@ -3,9 +3,7 @@ import { DashboardPage } from '../pages/DashboardPage';
 
 /**
  * Dashboard Page Tests
- *
- * Covers: page load, stat cards, recent transactions,
- *         sidebar navigation, role-based display
+ * Covers: page load, 12 stat cards, navigation, recent transactions, RBAC
  */
 
 // ── Admin tests ────────────────────────────────────────────────
@@ -25,7 +23,10 @@ test.describe('Dashboard Page — Admin', () => {
 
     test('should load dashboard page', async () => {
         await dashboardPage.assertOnDashboard();
-        await dashboardPage.assertPageTitle();
+    });
+
+    test('should show page title', async ({ page }) => {
+        await expect(page.locator('.page-title')).toBeVisible();
     });
 
     test('should show all stat cards', async () => {
@@ -54,7 +55,34 @@ test.describe('Dashboard Page — Admin', () => {
         await dashboardPage.assertRecentTransactionsHasRows();
     });
 
-    // ── Sidebar ────────────────────────────────────────────────
+    // ── Stat card navigation ────────────────────────────────────
+
+    test('clicking customers stat card navigates to customers page', async () => {
+        await dashboardPage.clickStatCustomers();
+        await expect(dashboardPage['page']).toHaveURL(/customers\.html/);
+    });
+
+    test('clicking accounts stat card navigates to accounts page', async () => {
+        await dashboardPage.clickStatAccounts();
+        await expect(dashboardPage['page']).toHaveURL(/accounts\.html/);
+    });
+
+    test('clicking active loans stat card navigates to loans page', async () => {
+        await dashboardPage.clickStatLoans();
+        await expect(dashboardPage['page']).toHaveURL(/loans\.html/);
+    });
+
+    test('clicking overdue loans stat card navigates to loans page with filter', async () => {
+        await dashboardPage.clickStatOverdue();
+        await expect(dashboardPage['page']).toHaveURL(/loans\.html/);
+    });
+
+    test('clicking transactions today navigates to transactions page', async () => {
+        await dashboardPage.clickStatTxnToday();
+        await expect(dashboardPage['page']).toHaveURL(/transactions\.html/);
+    });
+
+    // ── Sidebar navigation ─────────────────────────────────────
 
     test('should show sidebar with all nav links', async () => {
         await dashboardPage.assertSidebarVisible();

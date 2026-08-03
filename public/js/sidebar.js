@@ -20,6 +20,20 @@
 
         // ── 2. Make logo the toggle button ────────────────────
         if (logo) {
+            // Replace text F with logo image
+            const logoIcon = logo.querySelector('.logo-icon');
+            if (logoIcon) {
+                logoIcon.innerHTML = '';
+                logoIcon.style.background = 'transparent';
+                logoIcon.style.borderRadius = '0';
+                logoIcon.style.width = '34px';
+                logoIcon.style.height = '34px';
+                const img = document.createElement('img');
+                img.src = 'images/tempsidebarlogo.png';
+                img.alt = 'FinCore Bank';
+                img.style.cssText = 'width:34px;height:34px;border-radius:8px;object-fit:cover;display:block;';
+                logoIcon.appendChild(img);
+            }
             logo.style.cursor = 'pointer';
             logo.setAttribute('title', 'Toggle sidebar');
             logo.setAttribute('data-testid', 'sidebar-toggle');

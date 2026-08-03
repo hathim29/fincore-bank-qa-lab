@@ -70,7 +70,7 @@
             <div class="topbar-left">
                 <div>
                     <div class="page-title">Transactions</div>
-                    <div class="page-subtitle">All general banking transactions — deposits, withdrawals and transfers</div>
+                    
                 </div>
             </div>
             <div class="topbar-right">
@@ -80,26 +80,6 @@
         </header>
 
         <div class="page-body">
-
-            <!-- STAT CARDS -->
-            <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);" data-testid="txn-stat-grid">
-                <div class="stat-card">
-                    <div class="stat-icon blue"><i class="ti ti-arrows-exchange"></i></div>
-                    <div><div class="stat-value" id="statTotal" data-testid="stat-total">—</div><div class="stat-label">Total Transactions</div></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon green"><i class="ti ti-arrow-down-circle"></i></div>
-                    <div><div class="stat-value" id="statDeposit" data-testid="stat-deposit">—</div><div class="stat-label">Deposits</div></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon red"><i class="ti ti-arrow-up-circle"></i></div>
-                    <div><div class="stat-value" id="statWithdrawal" data-testid="stat-withdrawal">—</div><div class="stat-label">Withdrawals</div></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon purple"><i class="ti ti-arrows-right-left"></i></div>
-                    <div><div class="stat-value" id="statTransfer" data-testid="stat-transfer">—</div><div class="stat-label">Transfers</div></div>
-                </div>
-            </div>
 
             <!-- TABLE CARD -->
             <div class="card">
@@ -258,7 +238,13 @@ if (!user.username) window.location.href = 'login.html';
 document.getElementById('topbarUser').textContent = user.username || '';
 document.getElementById('topbarAvatar').textContent = (user.username || 'A')[0].toUpperCase();
 
-let currentPage=1, currentType='', currentChannel='', currentStatus='', limit=10;
+let currentPage=1, currentType='', currentChannel='', currentStatus='', currentDate='', limit=10;
+
+// ── Read URL params — handle dashboard widget clicks ───────────
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('date') === 'today') {
+    currentDate = new Date().toISOString().split('T')[0];
+}
 
 // Show add button for admin only
 if (user.role === 'admin') {
@@ -305,6 +291,7 @@ async function loadTransactions(page=1) {
         if (currentType)    p.append('transaction_type', currentType);
         if (currentChannel) p.append('channel', currentChannel);
         if (currentStatus)  p.append('status', currentStatus);
+        if (currentDate)    p.append('date', currentDate);
 
         const res  = await fetch(`${API}/transactions?${p}`);
         const data = await res.json();

@@ -23,9 +23,9 @@ test.describe('Transactions Page — Admin', () => {
 
     // ── Happy Path ─────────────────────────────────────────────
 
-    test('should load transactions table with stat cards', async () => {
+    test('should load transactions table', async () => {
         await txnPage.assertTableVisible();
-        await txnPage.assertStatCardsLoaded();
+        await txnPage.assertTotalCountContains('transactions found');
     });
 
     test('should show correct total count', async () => {

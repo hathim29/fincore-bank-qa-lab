@@ -221,10 +221,12 @@ export class CustomersPage extends BasePage {
     }
 
     async submitAddAccountForm() {
-        await this.saveAddAccBtn.click();
-        await this.page.waitForResponse(
-            r => r.url().includes('/api/accounts') && r.request().method() === 'POST'
-        );
+        await Promise.all([
+            this.page.waitForResponse(
+                r => r.url().includes('/api/accounts') && r.request().method() === 'POST'
+            ),
+            this.saveAddAccBtn.click(),
+        ]);
     }
 
     async assertAddAccountSuccess(text?: string) {

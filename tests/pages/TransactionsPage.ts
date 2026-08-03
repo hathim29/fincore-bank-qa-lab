@@ -16,13 +16,12 @@ export class TransactionsPage extends BasePage {
     private get txnBody()          { return this.page.getByTestId('transactions-body'); }
     private get addTxnBtn()        { return this.page.getByTestId('add-txn-btn'); }
 
-    // Stat cards
-    private get statTotal()        { return this.page.getByTestId('stat-total'); }
-    private get statDeposit()      { return this.page.getByTestId('stat-deposit'); }
-    private get statWithdrawal()   { return this.page.getByTestId('stat-withdrawal'); }
-    private get statTransfer()     { return this.page.getByTestId('stat-transfer'); }
+    // ── Table ──────────────────────────────────────────────────
+    async assertTableVisible() {
+        await expect(this.txnTable).toBeVisible();
+        await expect(this.txnBody).toBeVisible();
+    }
 
-    // View transaction modal
     private get viewModal()        { return this.page.locator('#viewTxnModal'); }
     private get closeViewModal()   { return this.page.locator('#closeViewModal'); }
 
@@ -39,14 +38,6 @@ export class TransactionsPage extends BasePage {
     // ── Navigation ─────────────────────────────────────────────
     async goto() {
         await super.goto('/transactions.html');
-    }
-
-    // ── Stat Cards ─────────────────────────────────────────────
-    async assertStatCardsLoaded() {
-        await expect(this.statTotal).not.toHaveText('—');
-        await expect(this.statDeposit).not.toHaveText('—');
-        await expect(this.statWithdrawal).not.toHaveText('—');
-        await expect(this.statTransfer).not.toHaveText('—');
     }
 
     // ── Table ──────────────────────────────────────────────────

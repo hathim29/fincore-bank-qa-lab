@@ -111,7 +111,7 @@
             <div class="topbar-left">
                 <div>
                     <div class="page-title">Credit Cards</div>
-                    <div class="page-subtitle">Manage credit cards, transactions and payments</div>
+                    
                 </div>
             </div>
             <div class="topbar-right">
@@ -121,14 +121,6 @@
         </header>
 
         <div class="page-body">
-
-            <!-- STAT CARDS -->
-            <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);" data-testid="cc-stat-grid">
-                <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-credit-card"></i></div><div><div class="stat-value" id="statTotal" data-testid="stat-total">—</div><div class="stat-label">Total Cards</div></div></div>
-                <div class="stat-card"><div class="stat-icon green"><i class="ti ti-circle-check"></i></div><div><div class="stat-value" id="statActive" data-testid="stat-active">—</div><div class="stat-label">Active</div></div></div>
-                <div class="stat-card"><div class="stat-icon red"><i class="ti ti-lock"></i></div><div><div class="stat-value" id="statBlocked" data-testid="stat-blocked">—</div><div class="stat-label">Blocked</div></div></div>
-                <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-clock"></i></div><div><div class="stat-value" id="statDueSoon" data-testid="stat-due-soon">—</div><div class="stat-label">Due Soon (≤5 days)</div></div></div>
-            </div>
 
             <!-- TABLE -->
             <div class="card">
@@ -328,6 +320,16 @@ document.getElementById('topbarAvatar').textContent = (user.username||'A')[0].to
 if (user.role === 'admin') document.getElementById('addCardBtn').style.display = 'inline-flex';
 
 let currentPage=1, currentStatus='', currentType='', limit=10;
+
+// ── Read URL params — handle dashboard widget clicks ───────────
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('status')) {
+    currentStatus = urlParams.get('status');
+    document.addEventListener('DOMContentLoaded', () => {
+        const sel = document.getElementById('statusFilter');
+        if (sel) sel.value = currentStatus;
+    });
+}
 let selectedPaymentType = null;
 
 function fmtDate(d) { return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }

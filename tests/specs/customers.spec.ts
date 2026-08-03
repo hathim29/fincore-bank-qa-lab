@@ -78,40 +78,47 @@ test.describe('Customers Page — Admin', () => {
 
     // ── Add Customer ───────────────────────────────────────────
 
-    test('should add a new customer successfully', async () => {
+    test('should add a new customer successfully', async ({ request }) => {
         const customer = newCustomer();
-        await customersPage.addCustomer({
-            name:  customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            city:  customer.city,
+        const res = await request.post('http://localhost:3000/api/customers', {
+            data: { name: customer.name, email: customer.email, phone: customer.phone, city: customer.city, kyc_status: 'pending' }
         });
-        await customersPage.assertAddSuccess(SUCCESS.customerCreated);
+        expect(res.status()).toBe(201);
+        const data = await res.json();
+        expect(data.name).toBe(customer.name);
     });
 
-    test('should show error when name is missing', async () => {
-        const customer = newCustomer();
-        await customersPage.openAddModal();
-        await customersPage.fillAddForm({ name: '', email: customer.email });
-        await customersPage.clickSaveButtonOnly();
-        await customersPage.assertAddError(ERRORS.nameRequired);
-    });
-
-    test('should show error when email is missing', async () => {
-        await customersPage.openAddModal();
-        await customersPage.fillAddForm({ name: 'Test Customer', email: '' });
-        await customersPage.clickSaveButtonOnly();
-        await customersPage.assertAddError(ERRORS.emailRequired);
-    });
-
-    test('should show error for duplicate email', async () => {
-        await customersPage.openAddModal();
-        await customersPage.fillAddForm({
-            name: 'Duplicate Test',
-            email: SEED_CUSTOMERS.email,
+    test('should show error when name is missing', async ({ request }) => {
+        const res = await request.post('http://localhost:3000/api/customers', {
+            data: { email: `missing.name.${Date.now()}@test.com` }
         });
-        await customersPage.submitAddForm();
-        await customersPage.assertAddError('already exists');
+        expect(res.status()).toBe(400);
+        const data = await res.json();
+        expect(data.error).toBeDefined();
+    });
+
+    test('should show error when email is missing', async ({ request }) => {
+        const res = await request.post('http://localhost:3000/api/customers', {
+            data: { name: 'No Email Customer' }
+        });
+        expect(res.status()).toBe(400);
+        const data = await res.json();
+        expect(data.error).toBeDefined();
+    });
+
+    test('should show error for duplicate email', async ({ request }) => {
+        const email = `duplicate.test.${Date.now()}@gmail.com`;
+        const first = await request.post('http://localhost:3000/api/customers', {
+            data: { name: 'Original Customer', email, phone: '9876543210', city: 'Chennai', kyc_status: 'pending' }
+        });
+        expect(first.status()).toBe(201);
+        // Try duplicate with all required fields — should fail on email uniqueness
+        const res = await request.post('http://localhost:3000/api/customers', {
+            data: { name: 'Duplicate Customer', email, phone: '9876543211' }
+        });
+        expect(res.status()).toBe(400);
+        const data = await res.json();
+        expect(data.error).toContain('already exists');
     });
 
     // ── Edit Customer ──────────────────────────────────────────
@@ -139,10 +146,17 @@ test.describe('Customers Page — Admin', () => {
         await customersPage.assertAddAccountSuccess('account created');
     });
 
-    // ── RBAC ───────────────────────────────────────────────────
-
-    test('admin should see Add Customer button', async () => {
+    test('admin should see Onboard Customer button', async () => {
         await customersPage.assertAddButtonVisible();
+    });
+
+    test('clicking Onboard Customer navigates to onboarding page', async ({ page }) => {
+        await expect(page.getByTestId('add-customer-button')).toBeVisible();
+        await Promise.all([
+            page.waitForURL(/onboarding\.html/),
+            page.getByTestId('add-customer-button').click(),
+        ]);
+        await expect(page).toHaveURL(/onboarding\.html/);
     });
 
 });

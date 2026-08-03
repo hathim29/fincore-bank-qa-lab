@@ -15,14 +15,12 @@ export class LoansPage extends BasePage {
     private get loansBody()         { return this.page.getByTestId('loans-body'); }
     private get addLoanBtn()        { return this.page.getByTestId('add-loan-btn'); }
 
-    // Stat cards
-    private get statTotal()         { return this.page.getByTestId('stat-total'); }
-    private get statActive()        { return this.page.getByTestId('stat-active'); }
-    private get statOverdue()       { return this.page.getByTestId('stat-overdue'); }
-    private get statClosed()        { return this.page.getByTestId('stat-closed'); }
-    private get statForeclosed()    { return this.page.getByTestId('stat-foreclosed'); }
+    // ── Table ──────────────────────────────────────────────────
+    async assertTableVisible() {
+        await expect(this.loansTable).toBeVisible();
+        await expect(this.loansBody).toBeVisible();
+    }
 
-    // Loan detail modal
     private get loanModal()         { return this.page.locator('#loanModal'); }
     private get closeLoanModal()    { return this.page.locator('#closeLoanModal'); }
     private get repaymentTable()    { return this.page.getByTestId('repayment-table'); }
@@ -57,11 +55,6 @@ export class LoansPage extends BasePage {
     }
 
     // ── Stat Cards ─────────────────────────────────────────────
-    async assertStatCardsLoaded() {
-        await expect(this.statTotal).not.toHaveText('—');
-        await expect(this.statActive).not.toHaveText('—');
-    }
-
     async getStatActive() { return this.statActive.textContent(); }
     async getStatClosed() { return this.statClosed.textContent(); }
 

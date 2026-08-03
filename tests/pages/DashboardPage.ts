@@ -115,4 +115,40 @@ export class DashboardPage extends BasePage {
             this.page.getByTestId('nav-credit-cards').click(),
         ]);
     }
+
+    // ── Stat card navigation ────────────────────────────────────
+    async clickStatCustomers() {
+        await Promise.all([
+            this.page.waitForURL(/customers\.html/),
+            this.page.getByTestId('stat-customers').click(),
+        ]);
+    }
+
+    async clickStatAccounts() {
+        await Promise.all([
+            this.page.waitForURL(/accounts\.html/),
+            this.page.getByTestId('stat-accounts').click(),
+        ]);
+    }
+
+    async clickStatLoans() {
+        await Promise.all([
+            this.page.waitForURL(/loans\.html/),
+            this.page.getByTestId('stat-loans').click(),
+        ]);
+    }
+
+    async clickStatOverdue() {
+        await Promise.all([
+            this.page.waitForURL(/loans\.html/),
+            this.page.getByTestId('stat-overdue').click(),
+        ]);
+    }
+
+    async clickStatTxnToday() {
+        await Promise.all([
+            this.page.waitForURL(/transactions\.html/),
+            this.page.getByTestId('stat-txn-today').click(),
+        ]);
+    }
 }

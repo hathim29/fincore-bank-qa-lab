@@ -61,7 +61,7 @@
             <div class="topbar-left">
                 <div>
                     <div class="page-title">Customers</div>
-                    <div class="page-subtitle">Manage customer profiles and KYC status</div>
+                    
                 </div>
             </div>
             <div class="topbar-right">
@@ -91,10 +91,10 @@
                         </select>
                         <span class="total-count" id="totalCount" data-testid="total-count"></span>
                     </div>
-                    <button class="btn btn-primary" id="addCustomerBtn"
-                            data-testid="add-customer-button" style="margin-left:16px; white-space:nowrap;">
-                        <i class="ti ti-plus"></i> Add Customer
-                    </button>
+                    <a href="onboarding.html" class="btn btn-primary" id="addCustomerBtn"
+                            data-testid="add-customer-button" style="margin-left:16px; white-space:nowrap;display:none;">
+                        <i class="ti ti-user-plus"></i> Onboard Customer
+                    </a>
                 </div>
 
                 <!-- TABLE -->
@@ -192,6 +192,9 @@
         </div>
         <div class="modal-body" id="viewModalBody">
             <p class="text-muted" style="text-align:center; padding:24px;">Loading...</p>
+        </div>
+        <div class="modal-footer" id="viewModalFooter">
+            <button class="btn btn-outline" id="closeViewModalBtn">Close</button>
         </div>
     </div>
 </div>
@@ -293,9 +296,9 @@
     document.getElementById('topbarUser').textContent = user.username || '';
     document.getElementById('topbarAvatar').textContent = (user.username || 'A')[0].toUpperCase();
 
-    // Hide add button for viewers
-    if (user.role !== 'admin') {
-        document.getElementById('addCustomerBtn').style.display = 'none';
+    // Show onboard button for admin only
+    if (user.role === 'admin') {
+        document.getElementById('addCustomerBtn').style.display = 'inline-flex';
     }
 
     let currentPage = 1;
@@ -496,24 +499,24 @@
                     ` : '<p class="text-muted fs-12">No credit cards found</p>'}
                 </div>
             `;
+
+            // Footer buttons
+            const footer = document.getElementById('viewModalFooter');
+            footer.innerHTML = `
+                <button class="btn btn-outline" onclick="document.getElementById('viewCustomerModal').classList.remove('open')">Close</button>
+                ${user.role === 'admin' ? `
+                <button class="btn btn-primary" onclick="addAccountForCustomer(${c.id}, '${c.name}')" data-testid="link-account-btn">
+                    <i class="ti ti-building-bank"></i> Link Another Account
+                </button>` : ''}
+            `;
         } catch (err) {
             body.innerHTML = `<p style="color:var(--red); text-align:center; padding:24px;">Error loading customer: ${err.message}</p>`;
         }
     }
 
     // ----------------------------------------
-    // ADD CUSTOMER
-    // ----------------------------------------
-    document.getElementById('addCustomerBtn').addEventListener('click', () => {
-        document.getElementById('modalError').classList.add('d-none');
-        document.getElementById('modalSuccess').classList.add('d-none');
-        document.getElementById('modalName').value = '';
-        document.getElementById('modalEmail').value = '';
-        document.getElementById('modalPhone').value = '';
-        document.getElementById('modalCity').value = '';
-        document.getElementById('modalKyc').value = 'pending';
-        document.getElementById('addCustomerModal').classList.add('open');
-    });
+    // ADD CUSTOMER — now handled by onboarding.html link
+    // addCustomerBtn is an <a> tag — no click listener needed
 
     document.getElementById('saveCustomerBtn').addEventListener('click', async () => {
         const name  = document.getElementById('modalName').value.trim();
@@ -567,6 +570,9 @@
         });
     });
     document.getElementById('closeViewModal').addEventListener('click', () => {
+        document.getElementById('viewCustomerModal').classList.remove('open');
+    });
+    document.getElementById('closeViewModalBtn').addEventListener('click', () => {
         document.getElementById('viewCustomerModal').classList.remove('open');
     });
 

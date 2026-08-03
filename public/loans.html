@@ -95,7 +95,7 @@
             <div class="topbar-left">
                 <div>
                     <div class="page-title">Loans</div>
-                    <div class="page-subtitle">Manage loan applications, repayments and lifecycle</div>
+                    
                 </div>
             </div>
             <div class="topbar-right">
@@ -105,15 +105,6 @@
         </header>
 
         <div class="page-body">
-
-            <!-- STAT CARDS -->
-            <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);" data-testid="loan-stat-grid">
-                <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-receipt"></i></div><div><div class="stat-value" id="statTotal" data-testid="stat-total">—</div><div class="stat-label">Total Loans</div></div></div>
-                <div class="stat-card"><div class="stat-icon green"><i class="ti ti-circle-check"></i></div><div><div class="stat-value" id="statActive" data-testid="stat-active">—</div><div class="stat-label">Active</div></div></div>
-                <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-alert-triangle"></i></div><div><div class="stat-value" id="statOverdue" data-testid="stat-overdue">—</div><div class="stat-label">Overdue</div></div></div>
-                <div class="stat-card"><div class="stat-icon teal"><i class="ti ti-circle-x"></i></div><div><div class="stat-value" id="statClosed" data-testid="stat-closed">—</div><div class="stat-label">Closed</div></div></div>
-                <div class="stat-card"><div class="stat-icon red"><i class="ti ti-ban"></i></div><div><div class="stat-value" id="statForeclosed" data-testid="stat-foreclosed">—</div><div class="stat-label">Foreclosed</div></div></div>
-            </div>
 
             <!-- TABLE -->
             <div class="card">
@@ -338,6 +329,17 @@ if (user.role === 'admin') document.getElementById('addLoanBtn').style.display =
 let currentPage=1, currentStatus='', currentType='', limit=10;
 let currentLoanId = null;
 let currentEmiNumber = null;
+
+// ── Read URL params — handle dashboard widget clicks ───────────
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('status')) {
+    currentStatus = urlParams.get('status');
+    // Update the select dropdown to match
+    document.addEventListener('DOMContentLoaded', () => {
+        const sel = document.getElementById('statusFilter');
+        if (sel) sel.value = currentStatus;
+    });
+}
 
 // ----------------------------------------
 // HELPERS

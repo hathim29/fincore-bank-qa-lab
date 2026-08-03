@@ -15,13 +15,12 @@ export class CreditCardsPage extends BasePage {
     private get cardsBody()         { return this.page.getByTestId('cards-body'); }
     private get addCardBtn()        { return this.page.getByTestId('add-card-btn'); }
 
-    // Stat cards
-    private get statTotal()         { return this.page.getByTestId('stat-total'); }
-    private get statActive()        { return this.page.getByTestId('stat-active'); }
-    private get statBlocked()       { return this.page.getByTestId('stat-blocked'); }
-    private get statDueSoon()       { return this.page.getByTestId('stat-due-soon'); }
+    // ── Table ──────────────────────────────────────────────────
+    async assertTableVisible() {
+        await expect(this.cardsTable).toBeVisible();
+        await expect(this.cardsBody).toBeVisible();
+    }
 
-    // Card detail modal
     private get cardModal()         { return this.page.locator('#cardModal'); }
     private get closeCardModal()    { return this.page.locator('#closeCardModal'); }
     private get cardPayBtn()        { return this.page.getByTestId('card-pay-btn'); }
@@ -56,12 +55,6 @@ export class CreditCardsPage extends BasePage {
     // ── Navigation ─────────────────────────────────────────────
     async goto() {
         await super.goto('/credit-cards.html');
-    }
-
-    // ── Stat Cards ─────────────────────────────────────────────
-    async assertStatCardsLoaded() {
-        await expect(this.statTotal).not.toHaveText('—');
-        await expect(this.statActive).not.toHaveText('—');
     }
 
     // ── Table ──────────────────────────────────────────────────

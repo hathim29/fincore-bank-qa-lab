@@ -14,13 +14,12 @@ export class AccountsPage extends BasePage {
     private get accountsTable()    { return this.page.getByTestId('accounts-table'); }
     private get accountsBody()     { return this.page.getByTestId('accounts-body'); }
 
-    // Stat cards
-    private get statTotal()        { return this.page.getByTestId('stat-total-accounts'); }
-    private get statActive()       { return this.page.getByTestId('stat-active-accounts'); }
-    private get statFrozen()       { return this.page.getByTestId('stat-frozen-accounts'); }
-    private get statClosed()       { return this.page.getByTestId('stat-closed-accounts'); }
+    // ── Table ──────────────────────────────────────────────────
+    async assertTableVisible() {
+        await expect(this.accountsTable).toBeVisible();
+        await expect(this.accountsBody).toBeVisible();
+    }
 
-    // View account modal
     private get viewModal()        { return this.page.locator('#viewAccountModal'); }
     private get viewModalTitle()   { return this.page.locator('#viewModalTitle'); }
     private get txnTable()         { return this.page.getByTestId('account-txn-table'); }
@@ -36,18 +35,6 @@ export class AccountsPage extends BasePage {
     async goto() {
         await super.goto('/accounts.html');
     }
-
-    // ── Stat Cards ─────────────────────────────────────────────
-    async assertStatCardsVisible() {
-        await expect(this.statTotal).not.toHaveText('—');
-        await expect(this.statActive).not.toHaveText('—');
-        await expect(this.statFrozen).not.toHaveText('—');
-        await expect(this.statClosed).not.toHaveText('—');
-    }
-
-    async getStatTotal()  { return this.statTotal.textContent(); }
-    async getStatActive() { return this.statActive.textContent(); }
-    async getStatFrozen() { return this.statFrozen.textContent(); }
 
     // ── Table ──────────────────────────────────────────────────
     async assertTableVisible() {

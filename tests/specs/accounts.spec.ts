@@ -24,9 +24,9 @@ test.describe('Accounts Page — Admin', () => {
 
     // ── Happy Path ─────────────────────────────────────────────
 
-    test('should load accounts table with stat cards', async () => {
+    test('should load accounts table', async () => {
         await accountsPage.assertTableVisible();
-        await accountsPage.assertStatCardsVisible();
+        await accountsPage.assertTotalCountContains('accounts found');
     });
 
     test('should show correct total count', async () => {

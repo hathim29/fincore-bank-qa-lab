@@ -61,7 +61,7 @@
             <div class="topbar-left">
                 <div>
                     <div class="page-title">Dashboard</div>
-                    <div class="page-subtitle">Welcome back — here's what's happening today</div>
+                    
                 </div>
             </div>
             <div class="topbar-right">
@@ -72,49 +72,64 @@
 
         <div class="page-body">
 
-            <!-- STAT CARDS -->
-            <div class="stat-grid" data-testid="stat-grid">
-                <div class="stat-card">
+            <!-- STAT CARDS — ALL WIDGETS -->
+            <!-- Row 1: Customers + Accounts -->
+            <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);" data-testid="stat-grid">
+                <div class="stat-card blue clickable" onclick="window.location.href='customers.html'" data-testid="stat-customers">
                     <div class="stat-icon blue"><i class="ti ti-users"></i></div>
-                    <div>
-                        <div class="stat-value" id="statCustomers" data-testid="stat-customers">—</div>
-                        <div class="stat-label">Total Customers</div>
-                    </div>
+                    <div><div class="stat-value" id="statCustomers">—</div><div class="stat-label">Total Customers</div></div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card teal clickable" onclick="window.location.href='accounts.html'" data-testid="stat-accounts">
                     <div class="stat-icon teal"><i class="ti ti-building-bank"></i></div>
-                    <div>
-                        <div class="stat-value" id="statAccounts" data-testid="stat-accounts">—</div>
-                        <div class="stat-label">Active Accounts</div>
-                    </div>
+                    <div><div class="stat-value" id="statAccounts">—</div><div class="stat-label">Active Accounts</div></div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card amber clickable" onclick="window.location.href='accounts.html?status=frozen'" data-testid="stat-frozen">
+                    <div class="stat-icon amber"><i class="ti ti-lock"></i></div>
+                    <div><div class="stat-value" id="statFrozen">—</div><div class="stat-label">Frozen Accounts</div></div>
+                </div>
+                <div class="stat-card red clickable" onclick="window.location.href='accounts.html?status=closed'" data-testid="stat-closed-accounts">
+                    <div class="stat-icon red"><i class="ti ti-x"></i></div>
+                    <div><div class="stat-value" id="statClosedAccounts">—</div><div class="stat-label">Closed Accounts</div></div>
+                </div>
+            </div>
+
+            <!-- Row 2: Transactions + Loans -->
+            <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+                <div class="stat-card green clickable" onclick="window.location.href='transactions.html?date=today'" data-testid="stat-txn-today">
                     <div class="stat-icon green"><i class="ti ti-arrows-exchange"></i></div>
-                    <div>
-                        <div class="stat-value" id="statTxnToday" data-testid="stat-txn-today">—</div>
-                        <div class="stat-label">Transactions Today</div>
-                    </div>
+                    <div><div class="stat-value" id="statTxnToday">—</div><div class="stat-label">Transactions Today</div></div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card purple clickable" onclick="window.location.href='loans.html?status=active'" data-testid="stat-loans">
                     <div class="stat-icon purple"><i class="ti ti-receipt"></i></div>
-                    <div>
-                        <div class="stat-value" id="statLoans" data-testid="stat-loans">—</div>
-                        <div class="stat-label">Active Loans</div>
-                    </div>
+                    <div><div class="stat-value" id="statLoans">—</div><div class="stat-label">Active Loans</div></div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon blue"><i class="ti ti-credit-card"></i></div>
-                    <div>
-                        <div class="stat-value" id="statCards" data-testid="stat-cards">—</div>
-                        <div class="stat-label">Active Cards</div>
-                    </div>
-                </div>
-                <div class="stat-card">
+                <div class="stat-card red clickable" onclick="window.location.href='loans.html?status=overdue'" data-testid="stat-overdue">
                     <div class="stat-icon red"><i class="ti ti-alert-triangle"></i></div>
-                    <div>
-                        <div class="stat-value" id="statOverdue" data-testid="stat-overdue">—</div>
-                        <div class="stat-label">Overdue Loans</div>
-                    </div>
+                    <div><div class="stat-value" id="statOverdue">—</div><div class="stat-label">Overdue Loans</div></div>
+                </div>
+                <div class="stat-card teal clickable" onclick="window.location.href='loans.html?status=closed'" data-testid="stat-closed-loans">
+                    <div class="stat-icon teal"><i class="ti ti-circle-check"></i></div>
+                    <div><div class="stat-value" id="statClosedLoans">—</div><div class="stat-label">Closed Loans</div></div>
+                </div>
+            </div>
+
+            <!-- Row 3: Credit Cards -->
+            <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+                <div class="stat-card blue clickable" onclick="window.location.href='credit-cards.html'" data-testid="stat-cards">
+                    <div class="stat-icon blue"><i class="ti ti-credit-card"></i></div>
+                    <div><div class="stat-value" id="statCards">—</div><div class="stat-label">Total Cards</div></div>
+                </div>
+                <div class="stat-card green clickable" onclick="window.location.href='credit-cards.html?status=active'" data-testid="stat-active-cards">
+                    <div class="stat-icon green"><i class="ti ti-circle-check"></i></div>
+                    <div><div class="stat-value" id="statActiveCards">—</div><div class="stat-label">Active Cards</div></div>
+                </div>
+                <div class="stat-card red clickable" onclick="window.location.href='credit-cards.html?status=blocked'" data-testid="stat-blocked-cards">
+                    <div class="stat-icon red"><i class="ti ti-lock"></i></div>
+                    <div><div class="stat-value" id="statBlockedCards">—</div><div class="stat-label">Blocked Cards</div></div>
+                </div>
+                <div class="stat-card amber clickable" onclick="window.location.href='credit-cards.html'" data-testid="stat-due-soon">
+                    <div class="stat-icon amber"><i class="ti ti-clock"></i></div>
+                    <div><div class="stat-value" id="statDueSoon">—</div><div class="stat-label">Due Soon (≤5 days)</div></div>
                 </div>
             </div>
 
@@ -199,12 +214,18 @@
     async function loadStats() {
         const res = await fetch(`${API}/dashboard/stats`);
         const d = await res.json();
-        document.getElementById('statCustomers').textContent = fmt(d.total_customers);
-        document.getElementById('statAccounts').textContent  = fmt(d.active_accounts);
-        document.getElementById('statTxnToday').textContent  = fmt(d.transactions_today);
-        document.getElementById('statLoans').textContent     = fmt(d.active_loans);
-        document.getElementById('statCards').textContent     = fmt(d.active_cards);
-        document.getElementById('statOverdue').textContent   = fmt(d.overdue_loans);
+        document.getElementById('statCustomers').textContent      = fmt(d.total_customers);
+        document.getElementById('statAccounts').textContent       = fmt(d.active_accounts);
+        document.getElementById('statFrozen').textContent         = fmt(d.frozen_accounts  || 0);
+        document.getElementById('statClosedAccounts').textContent = fmt(d.closed_accounts  || 0);
+        document.getElementById('statTxnToday').textContent       = fmt(d.transactions_today);
+        document.getElementById('statLoans').textContent          = fmt(d.active_loans);
+        document.getElementById('statOverdue').textContent        = fmt(d.overdue_loans);
+        document.getElementById('statClosedLoans').textContent    = fmt(d.closed_loans     || 0);
+        document.getElementById('statCards').textContent          = fmt(d.total_cards       || 0);
+        document.getElementById('statActiveCards').textContent    = fmt(d.active_cards      || 0);
+        document.getElementById('statBlockedCards').textContent   = fmt(d.blocked_cards     || 0);
+        document.getElementById('statDueSoon').textContent        = fmt(d.cards_due_soon    || 0);
     }
 
     async function loadRecentTxns() {

@@ -2,7 +2,7 @@
 
 [![Playwright Tests](https://github.com/hathim29/fincore-bank-qa-lab/actions/workflows/playwright.yml/badge.svg)](https://github.com/hathim29/fincore-bank-qa-lab/actions/workflows/playwright.yml)
 
-A full-stack banking application built as a QA automation practice target. Designed to demonstrate real-world quality engineering skills across the complete banking domain — customers, accounts, transactions, loans, credit cards, and role-based access control.
+A full-stack banking application built as a QA automation practice target. Designed to demonstrate real-world quality engineering skills across the complete banking domain — customer onboarding, accounts, transactions, loans, credit cards, and role-based access control.
 
 ---
 
@@ -15,6 +15,7 @@ A full-stack banking application built as a QA automation practice target. Desig
 | Database | PostgreSQL (hosted on Supabase) |
 | Testing — UI | Playwright + TypeScript (Page Object Model) |
 | Testing — API | Postman + Newman |
+| API Docs | Swagger UI (OpenAPI 3.0) |
 | CI/CD | GitHub Actions |
 | Icons | Tabler Icons |
 
@@ -22,14 +23,16 @@ A full-stack banking application built as a QA automation practice target. Desig
 
 ## Features
 
-- **Dashboard** — live stats, recent transactions, overdue loans and cards due soon
-- **Customers** — CRUD, KYC management, account creation per customer
-- **Accounts** — freeze / unfreeze / close with mandatory reason and full audit trail
-- **Transactions** — deposits, withdrawals, transfers across all banking channels (ATM, UPI-GPay, NEFT, RTGS etc.)
-- **Loans** — full lifecycle — creation, EMI repayment schedule, loan score, foreclosure, closure
-- **Credit Cards** — issuance, transaction history, full / minimum / custom payment, block / unblock
-- **Role-based access** — admin (full CRUD) and viewer (read-only) roles
-- **Expandable sidebar** — collapsible navigation with tooltips
+- **Dashboard** — 12 clickable stat widgets, each navigating to the relevant filtered page
+- **Customer Onboarding** — 4-step flow with PAN/Aadhaar KYC validation, processing animation, account creation
+- **Customers** — Customer list with search, KYC management
+- **Accounts** — Account number autocomplete search, freeze/unfreeze/close with mandatory reason and audit trail
+- **Transactions** — Deposits, withdrawals, transfers across all banking channels (ATM, UPI-GPay, NEFT, RTGS etc.)
+- **Loans** — Full lifecycle — creation, EMI repayment schedule, loan score, foreclosure, closure
+- **Credit Cards** — Issuance, transaction history, full/minimum/custom payment, block/unblock
+- **Role-based access** — Admin (full CRUD) and viewer (read-only) roles
+- **API Documentation** — Swagger UI at `/api-docs`
+- **Test Utilities** — `POST /api/test/reset` to reseed database for CI
 
 ---
 
@@ -56,8 +59,6 @@ npm install
 
 ### 3. Set up environment variables
 
-Copy the example file and fill in your database details:
-
 ```bash
 cp .env.example .env
 ```
@@ -71,11 +72,7 @@ PORT=3000
 
 ### 4. Set up the database
 
-Run the schema in your PostgreSQL database. If using Supabase:
-
-1. Go to your Supabase project → SQL Editor
-2. Open `db/schema.sql`, copy the contents, paste and run
-3. You should see "Success. No rows returned"
+Run `db/schema.sql` in your Supabase SQL Editor.
 
 ### 5. Seed the database
 
@@ -83,12 +80,7 @@ Run the schema in your PostgreSQL database. If using Supabase:
 node db/seed.js
 ```
 
-This generates:
-- 20 customers with realistic Indian names and cities
-- ~34 accounts (savings / current / salary)
-- ~16 loans with full EMI schedules and repayment history
-- ~15 credit cards with transactions
-- 500+ general banking transactions across all channels
+Generates: 20 customers, ~34 accounts, ~16 loans, ~15 credit cards, 500+ transactions.
 
 ### 6. Start the server
 
@@ -109,37 +101,28 @@ Navigate to `http://localhost:3000/login.html`
 | Admin | admin | admin123 |
 | Viewer | viewer | viewer123 |
 
+### 8. View API docs
+
+Navigate to `http://localhost:3000/api-docs`
+
 ---
 
 ## Running Playwright Tests
 
-### Install Playwright browsers (first time only)
-
 ```bash
+# Install browsers (first time only)
 npx playwright install
-```
 
-### Run all tests
-
-```bash
+# Run all tests
 npx playwright test
-```
 
-### Run a specific spec
-
-```bash
+# Run a specific spec
 npx playwright test tests/specs/login.spec.ts
-```
 
-### Run in headed mode (see the browser)
-
-```bash
+# Run in headed mode
 npx playwright test --headed
-```
 
-### View HTML report
-
-```bash
+# View HTML report
 npx playwright show-report
 ```
 
@@ -150,29 +133,31 @@ npx playwright show-report
 | Module | Spec File | Tests | Status |
 |---|---|---|---|
 | Login | login.spec.ts | 13 | ✅ Passing |
-| Customers | customers.spec.ts | 19 | ✅ Passing |
+| Dashboard | dashboard.spec.ts | 21 | ✅ Passing |
+| Customers | customers.spec.ts | 20 | ✅ Passing |
 | Accounts | accounts.spec.ts | 23 | ✅ Passing |
 | Transactions | transactions.spec.ts | 21 | ✅ Passing |
 | Loans | loans.spec.ts | 23 | ✅ Passing |
 | Credit Cards | credit-cards.spec.ts | 27 | ✅ Passing |
-| **Total** | | **126** | **✅ All Passing** |
+| Security | security.spec.ts | 9 | ✅ Passing |
+| Onboarding | onboarding.spec.ts | 14 | ✅ Passing |
+| **Total** | | **171** | **✅ All Passing** |
 
-Full Page Object Model (POM) architecture — every page has a dedicated Page Object class with all selectors and actions encapsulated. Tests use `data-testid` selectors throughout.
+Full Page Object Model (POM) architecture — every page has a dedicated Page Object class. Tests use `data-testid` selectors throughout.
 
 ---
 
 ## API Testing — Postman
 
-A complete Postman collection is included covering all 7 API modules with 37 requests and 215+ tests.
+A complete Postman collection covering all 7 API modules — 37 requests, 215+ tests.
 
 ### Import into Postman
 
-1. Open Postman
-2. Click **Import**
-3. Select `FinCore_Bank_API_Tests.postman_collection.json`
-4. Also import `FinCore_Bank_Local.postman_environment.json`
-5. Select the **FinCore Bank — Local** environment from the top-right dropdown
-6. Click **Run collection**
+1. Open Postman → **Import**
+2. Select `FinCore_Bank_API_Tests.postman_collection.json`
+3. Also import `FinCore_Bank_Local.postman_environment.json`
+4. Select **FinCore Bank — Local** environment
+5. Click **Run collection**
 
 ### Coverage
 
@@ -189,19 +174,29 @@ A complete Postman collection is included covering all 7 API modules with 37 req
 
 ---
 
+## API Documentation
+
+Swagger UI is available at `http://localhost:3000/api-docs` — all 21 endpoints documented with request/response schemas, parameters, and examples.
+
+---
+
+## Test Utilities
+
+| Endpoint | Description |
+|---|---|
+| `GET /api/test/status` | Check availability |
+| `POST /api/test/reset` | Truncate all tables and reseed (async — ~60s) |
+| `POST /api/test/seed` | Seed without clearing |
+
+> ⚠️ Test utilities are blocked in production (`NODE_ENV=production`).
+
+---
+
 ## CI/CD
 
-GitHub Actions runs the full Playwright test suite on every push to main.
+GitHub Actions runs the full 171-test Playwright suite on every push to main.
 
-**Pipeline steps:**
-1. Checkout code
-2. Set up Node.js 20
-3. Install dependencies
-4. Install Playwright browsers (Chromium)
-5. Create .env from GitHub secret
-6. Seed database
-7. Run 126 Playwright tests
-8. Upload HTML report as artifact
+**Pipeline:** Checkout → Node 20 → Install → Playwright browsers → Create .env → Seed DB → Run tests → Upload report
 
 The `DATABASE_URL` is stored as a GitHub Actions secret — never committed to the repository.
 
@@ -213,15 +208,15 @@ The `DATABASE_URL` is stored as a GitHub Actions secret — never committed to t
 fincore-bank-qa-lab/
 ├── db/
 │   ├── connection.js        PostgreSQL connection pool
-│   ├── schema.sql           Full database schema — run this first
-│   └── seed.js              Seed script — run: node db/seed.js
+│   ├── schema.sql           Full database schema
+│   └── seed.js              Seed script
 ├── public/
-│   ├── css/
-│   │   └── style.css        Shared design system — dark sidebar layout
-│   ├── js/
-│   │   └── sidebar.js       Expandable sidebar toggle
+│   ├── css/style.css        Shared design system
+│   ├── js/sidebar.js        Expandable sidebar
+│   ├── images/              Logo assets
 │   ├── login.html
 │   ├── dashboard.html
+│   ├── onboarding.html      Customer onboarding — 4-step flow
 │   ├── customers.html
 │   ├── accounts.html
 │   ├── transactions.html
@@ -229,41 +224,43 @@ fincore-bank-qa-lab/
 │   └── credit-cards.html
 ├── routes/
 │   ├── customers.js
-│   ├── accounts.js
+│   ├── accounts.js          Includes /search endpoint
 │   ├── loans.js
 │   ├── loanRepayments.js
 │   ├── creditCards.js
 │   ├── transactions.js
-│   └── dashboard.js
+│   ├── dashboard.js
+│   └── test.js              Test utility endpoints
 ├── tests/
 │   ├── auth/                Saved auth state (gitignored)
-│   ├── fixtures/
-│   │   └── testData.ts      All test constants
+│   ├── fixtures/testData.ts All test constants
 │   ├── pages/               Page Object Model classes
 │   │   ├── BasePage.ts
 │   │   ├── LoginPage.ts
+│   │   ├── DashboardPage.ts
 │   │   ├── CustomersPage.ts
 │   │   ├── AccountsPage.ts
 │   │   ├── TransactionsPage.ts
 │   │   ├── LoansPage.ts
 │   │   └── CreditCardsPage.ts
-│   └── specs/               Test specification files
+│   └── specs/
 │       ├── login.spec.ts
+│       ├── dashboard.spec.ts
 │       ├── customers.spec.ts
 │       ├── accounts.spec.ts
 │       ├── transactions.spec.ts
 │       ├── loans.spec.ts
-│       └── credit-cards.spec.ts
-├── .github/
-│   └── workflows/
-│       └── playwright.yml   GitHub Actions CI pipeline
+│       ├── credit-cards.spec.ts
+│       ├── security.spec.ts
+│       └── onboarding.spec.ts
+├── .github/workflows/
+│   └── playwright.yml       GitHub Actions CI
+├── swagger.js               OpenAPI 3.0 specification
 ├── FinCore_Bank_API_Tests.postman_collection.json
 ├── FinCore_Bank_Local.postman_environment.json
+├── CHALLENGES.md            QA challenge list — 20 scenarios
 ├── .env.example
-├── .gitignore
-├── package.json
-├── playwright.config.ts
-└── server.js                Entry point — npm run dev
+└── server.js
 ```
 
 ---
@@ -276,38 +273,43 @@ fincore-bank-qa-lab/
 | POST | /api/customers | Create new customer |
 | PUT | /api/customers/:id | Update customer |
 | GET | /api/accounts | Paginated accounts with filters |
+| GET | /api/accounts/search | Autocomplete search by account number |
 | GET | /api/accounts/:id/audit | Account audit trail |
-| PUT | /api/accounts/:id | Update account status (freeze/unfreeze/close) |
+| PUT | /api/accounts/:id | Freeze/unfreeze/close account |
 | GET | /api/loans | Paginated loans with filters |
-| GET | /api/loans/:id | Full loan detail with EMI schedule |
+| GET | /api/loans/:id | Loan detail with full EMI schedule |
 | POST | /api/loans | Create new loan |
-| PUT | /api/loans/:id | Update loan status (foreclose/close) |
+| PUT | /api/loans/:id | Foreclose or close loan |
 | POST | /api/loan-repayments | Record EMI payment |
-| GET | /api/loan-repayments | Get repayment history for a loan |
+| GET | /api/loan-repayments | Repayment history for a loan |
 | GET | /api/credit-cards | Paginated credit cards |
 | POST | /api/credit-cards | Issue new credit card |
-| POST | /api/credit-cards/:id/payment | Make payment (full/minimum/custom) |
+| POST | /api/credit-cards/:id/payment | Pay full/minimum/custom |
 | PUT | /api/credit-cards/:id/status | Block or unblock card |
 | GET | /api/transactions | Paginated transactions with filters |
 | POST | /api/transactions | Create new transaction |
-| GET | /api/dashboard/stats | Dashboard summary counts |
-| GET | /api/dashboard/recent-transactions | Recent transactions for dashboard |
+| GET | /api/dashboard/stats | All dashboard statistics (12 fields) |
 | GET | /api/dashboard/alerts | Overdue loans and cards due soon |
+| POST | /api/test/reset | Reset and reseed database |
+
+---
+
+## QA Challenges
+
+See **[CHALLENGES.md](CHALLENGES.md)** for 20 QA scenarios across 5 levels — from beginner UI validation checks to advanced API security and automation challenges.
 
 ---
 
 ## Known Limitations
 
-These are intentional simplifications for a QA practice lab — not production bugs:
-
 | Limitation | Reason |
 |---|---|
-| Authentication is client-side only | Intentional — purpose is to create role-based UI test scenarios, not secure real data |
-| Passwords stored as plain text | Intentional for lab simplicity — not a production pattern |
-| Transaction balance figures not mathematically accurate | Seed data generates approximate values for display testing |
-| Transfer type has no recipient account | Transfer is a transaction type for filter/display testing only |
-| Credit card due date does not advance on billing cycle | Static field — Generate Statement feature planned |
-| Loan IDs are numeric | FNCB+type+initial+4digit format planned for next iteration |
+| Authentication is client-side only | Intentional — creates role-based UI test scenarios |
+| Passwords stored as plain text | Intentional lab simplification |
+| Transaction balances not mathematically accurate | Seed data generates approximate values |
+| Transfer type has no recipient account | For filter/display testing only |
+| Credit card due date static | Generate Statement feature planned |
+| Loan IDs are numeric | FNCB+type+initial+4digit format planned |
 
 ---
 
