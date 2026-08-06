@@ -2,6 +2,8 @@
 
 [![Playwright Tests](https://github.com/hathim29/fincore-bank-qa-lab/actions/workflows/playwright.yml/badge.svg)](https://github.com/hathim29/fincore-bank-qa-lab/actions/workflows/playwright.yml)
 
+🌐 **Live Demo:** [https://fincore-qalab.com](https://fincore-qalab.com)
+
 A full-stack banking application built as a QA automation practice target. Designed to demonstrate real-world quality engineering skills across the complete banking domain — customer onboarding, accounts, transactions, loans, credit cards, and role-based access control.
 
 ---
@@ -176,7 +178,9 @@ A complete Postman collection covering all 7 API modules — 37 requests, 215+ t
 
 ## API Documentation
 
-Swagger UI is available at `http://localhost:3000/api-docs` — all 21 endpoints documented with request/response schemas, parameters, and examples.
+Swagger UI is available at:
+ **Local:** : `http://localhost:3000/api-docs`
+ **Live:** : [https://fincore-qalab.com/api-docs](https://fincore-qalab.com/api-docs)
 
 ---
 
@@ -318,3 +322,5 @@ See **[CHALLENGES.md](CHALLENGES.md)** for 20 QA scenarios across 5 levels — f
 **Hathim Al Ghifari J**
 Senior QA Engineer & Certified ScrumMaster
 [LinkedIn](https://linkedin.com/in/hathimjk3)
+[Live Demo](https://fincore-qalab.com) 
+[GitHub](https://github.com/hathim29/fincore-bank-qa-lab)
