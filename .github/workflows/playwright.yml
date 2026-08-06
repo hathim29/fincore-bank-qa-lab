@@ -1,52 +1,43 @@
-name: FinCore Bank — Playwright Tests
+name: Playwright Tests & Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
-  playwright:
+  test:
     name: Run Playwright Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
-      # ── 1. Checkout code ──────────────────────────────────────
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # ── 2. Set up Node.js ─────────────────────────────────────
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
-      # ── 3. Install dependencies ───────────────────────────────
       - name: Install dependencies
         run: npm ci
 
-      # ── 4. Install Playwright browsers ────────────────────────
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      # ── 5. Create .env file from GitHub secret ────────────────
       - name: Create .env file
         run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
 
-      # ── 6. Seed the database ──────────────────────────────────
       - name: Seed database
         run: node db/seed.js
 
-      # ── 7. Run Playwright tests ───────────────────────────────
       - name: Run Playwright tests
         run: npx playwright test --reporter=list
         env:
           CI: true
 
-      # ── 8. Upload HTML report — always runs ───────────────────
       - name: Upload test report
         uses: actions/upload-artifact@v4
         if: always()
@@ -54,3 +45,23 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
+  deploy:
+    name: Deploy to SIT
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/fincore-bank-qa-lab
+            git pull origin main
+            npm install --production
+            pm2 restart fincore-sit
+            echo "✅ Deployment complete — $(date)"
