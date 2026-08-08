@@ -124,7 +124,7 @@
                     </button>
                 </div>
 
-                <div class="table-wrap">
+                <div class="table-wrap table-scroll">
                     <table data-testid="transactions-table">
                         <thead>
                             <tr>
@@ -410,7 +410,7 @@ async function viewTransaction(id) {
             <div class="detail-section">
                 <div class="detail-section-title">Account Transaction History (Last 5)</div>
                 ${t.account_history?.length ? `
-                <div class="table-wrap">
+                <div class="table-wrap table-scroll">
                     <table>
                         <thead>
                             <tr><th>Date</th><th>Type</th><th>Channel</th><th>Amount</th><th>Balance After</th><th>Status</th></tr>

@@ -138,7 +138,7 @@
                     </button>
                 </div>
 
-                <div class="table-wrap">
+                <div class="table-wrap table-scroll">
                     <table data-testid="loans-table">
                         <thead>
                             <tr>
@@ -592,7 +592,7 @@ async function viewLoan(id) {
             <div class="detail-section">
                 <div class="detail-section-title">Repayment History</div>
                 ${loan.repayment_history?.length ? `
-                <div class="table-wrap">
+                <div class="table-wrap table-scroll">
                     <table class="emi-table" data-testid="repayment-table">
                         <thead>
                             <tr><th>EMI #</th><th>Due Date</th><th>Paid Date</th><th>Amount</th><th>Channel</th><th>Days Delayed</th><th>Status</th><th>Action</th></tr>

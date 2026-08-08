@@ -119,3 +119,67 @@
         init();
     }
 })();
+
+/* ============================================================
+   MOBILE SIDEBAR TOGGLE
+   Add this at the END of public/js/sidebar.js
+   ============================================================ */
+
+// ── Mobile hamburger menu ──────────────────────────────────
+function initMobileMenu() {
+    const sidebar  = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
+    if (!sidebar) return;
+
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'sidebar-overlay';
+    overlay.id = 'sidebarOverlay';
+    document.body.appendChild(overlay);
+
+    // Create hamburger button
+    const hamburger = document.createElement('button');
+    hamburger.className = 'hamburger';
+    hamburger.setAttribute('data-testid', 'hamburger-menu');
+    hamburger.setAttribute('aria-label', 'Toggle menu');
+    hamburger.innerHTML = `
+        <span></span>
+        <span></span>
+        <span></span>
+    `;
+
+    // Insert hamburger before page title in topbar
+    const topbarLeft = document.querySelector('.topbar-left');
+    if (topbarLeft) {
+        topbarLeft.insertBefore(hamburger, topbarLeft.firstChild);
+    }
+
+    // Toggle sidebar on hamburger click
+    hamburger.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('show');
+    });
+
+    // Close sidebar when overlay is clicked
+    overlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('show');
+    });
+
+    // Close sidebar when a nav link is clicked on mobile
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('show');
+            }
+        });
+    });
+}
+
+// Run on DOM ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMobileMenu);
+} else {
+    initMobileMenu();
+}

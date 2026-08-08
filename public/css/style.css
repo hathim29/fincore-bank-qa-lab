@@ -926,3 +926,227 @@ tbody tr:hover { background: #f8fafd; }
     .stat-grid { grid-template-columns: 1fr 1fr; }
     .detail-grid { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   RESPONSIVE DESIGN — FinCore Bank
+   Add at the bottom of public/css/style.css
+   ============================================================ */
+
+/* ── Hamburger Button — hidden on desktop ─────────────────── */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    padding: 8px;
+    background: none;
+    border: none;
+    z-index: 200;
+}
+
+.hamburger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+/* ── Sidebar overlay — hidden on desktop ──────────────────── */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99;
+}
+
+.sidebar-overlay.show {
+    display: block;
+}
+
+/* ── Table scroll wrapper ─────────────────────────────────── */
+.table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ============================================================
+   TABLET — max-width: 1024px
+   ============================================================ */
+@media (max-width: 1024px) {
+    .stat-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* ============================================================
+   MOBILE — max-width: 768px
+   ============================================================ */
+@media (max-width: 768px) {
+
+    /* ── Sidebar ─────────────────────────────────────────── */
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 100;
+        width: 240px !important;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    /* ── Main content — full width on mobile ────────────── */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100%;
+    }
+
+    /* ── Topbar ──────────────────────────────────────────── */
+    .topbar {
+        padding: 0 16px;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+    }
+
+    .topbar-left {
+        gap: 8px;
+    }
+
+    .hamburger {
+        display: flex;
+    }
+
+    .page-title {
+        font-size: 18px !important;
+    }
+
+    /* ── Stat cards ──────────────────────────────────────── */
+    .stat-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 12px;
+    }
+
+    .stat-value {
+        font-size: 18px !important;
+    }
+
+    /* ── Tables ──────────────────────────────────────────── */
+    .card {
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 600px;
+    }
+
+    /* ── Page body padding ───────────────────────────────── */
+    .page-body {
+        padding: 12px;
+    }
+
+    /* ── Card header — stack filters vertically ─────────── */
+    .card-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px;
+    }
+
+    .filters-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .filter-select {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    /* ── Modals — full screen on mobile ──────────────────── */
+    .modal-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+    }
+
+    .modal-overlay {
+        align-items: flex-end;
+    }
+
+    /* ── Login card ──────────────────────────────────────── */
+    .login-card {
+        width: 100% !important;
+        max-width: 100%;
+        border-radius: 16px 16px 0 0;
+        padding: 28px 20px;
+    }
+
+    .login-wrapper {
+        align-items: flex-end;
+    }
+
+    /* ── Topbar avatar and username ──────────────────────── */
+    #topbarUser {
+        display: none;
+    }
+
+    /* ── Buttons ─────────────────────────────────────────── */
+    .btn {
+        padding: 7px 12px;
+        font-size: 12px;
+    }
+
+    /* ── Pagination ──────────────────────────────────────── */
+    .pagination {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    /* ── Total count ─────────────────────────────────────── */
+    .total-count {
+        font-size: 11px;
+    }
+}
+
+/* ============================================================
+   SMALL MOBILE — max-width: 480px
+   ============================================================ */
+@media (max-width: 480px) {
+
+    .stat-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px;
+    }
+
+    .stat-value {
+        font-size: 16px !important;
+    }
+
+    .stat-label {
+        font-size: 10px !important;
+    }
+
+    .stat-icon {
+        width: 34px !important;
+        height: 34px !important;
+        font-size: 15px !important;
+    }
+
+    .page-title {
+        font-size: 15px !important;
+    }
+
+    .login-logo img {
+        max-width: 220px !important;
+    }
+}

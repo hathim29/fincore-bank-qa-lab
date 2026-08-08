@@ -98,7 +98,7 @@
                 </div>
 
                 <!-- TABLE -->
-                <div class="table-wrap">
+                <div class="table-wrap table-scroll">
                     <table data-testid="customers-table">
                         <thead>
                             <tr>
@@ -440,10 +440,11 @@
                 <div class="detail-section">
                     <div class="detail-section-title">Accounts (${c.accounts?.length || 0})</div>
                     ${c.accounts?.length ? `
-                        <table>
-                            <thead>
-                                <tr><th>Account No.</th><th>Type</th><th>Balance</th><th>Status</th></tr>
-                            </thead>
+                        <div class="table-scroll">
+                            <table>
+                                <thead>
+                                    <tr><th>Account No.</th><th>Type</th><th>Balance</th><th>Status</th></tr>
+                                </thead>
                             <tbody>
                                 ${c.accounts.map(a => `
                                     <tr>
@@ -454,14 +455,14 @@
                                     </tr>
                                 `).join('')}
                             </tbody>
-                        </table>
+                        </table></div>
                     ` : '<p class="text-muted fs-12">No accounts found</p>'}
                 </div>
 
                 <div class="detail-section">
                     <div class="detail-section-title">Loans (${c.loans?.length || 0})</div>
                     ${c.loans?.length ? `
-                        <table>
+                        <div class="table-scroll"><table>
                             <thead>
                                 <tr><th>Loan ID</th><th>Type</th><th>Amount</th><th>Status</th></tr>
                             </thead>
@@ -475,14 +476,14 @@
                                     </tr>
                                 `).join('')}
                             </tbody>
-                        </table>
+                        </table></div>
                     ` : '<p class="text-muted fs-12">No loans found</p>'}
                 </div>
 
                 <div class="detail-section">
                     <div class="detail-section-title">Credit Cards (${c.credit_cards?.length || 0})</div>
                     ${c.credit_cards?.length ? `
-                        <table>
+                        <div class="table-scroll"><table>
                             <thead>
                                 <tr><th>Card Number</th><th>Type</th><th>Status</th></tr>
                             </thead>
@@ -495,7 +496,7 @@
                                     </tr>
                                 `).join('')}
                             </tbody>
-                        </table>
+                        </table></div>
                     ` : '<p class="text-muted fs-12">No credit cards found</p>'}
                 </div>
             `;
