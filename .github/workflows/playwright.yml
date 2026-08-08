@@ -2,7 +2,7 @@ name: Playwright Tests & Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   pull_request:
     branches: [ main ]
 
@@ -65,3 +65,22 @@ jobs:
             npm install --production
             pm2 restart fincore-sit
             echo "✅ Deployment complete — $(date)"
+
+  deploy-dev:
+    name: Deploy to DEV
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+
+    steps:
+      - name: Deploy to DEV EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/fincore-bank-dev
+            git pull origin dev
+            npm install --production
+            pm2 restart fincore-dev
+            echo "✅ DEV deployment complete — $(date)"
