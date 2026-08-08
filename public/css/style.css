@@ -1150,3 +1150,22 @@ tbody tr:hover { background: #f8fafd; }
         max-width: 220px !important;
     }
 }
+
+/* Desktop — 4 columns */
+.stat-grid {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+    .stat-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .stat-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}

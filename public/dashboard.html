@@ -74,7 +74,7 @@
 
             <!-- STAT CARDS — ALL WIDGETS -->
             <!-- Row 1: Customers + Accounts -->
-            <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);" data-testid="stat-grid">
+            <div class="stat-grid" data-testid="stat-grid">
                 <div class="stat-card blue clickable" onclick="window.location.href='customers.html'" data-testid="stat-customers">
                     <div class="stat-icon blue"><i class="ti ti-users"></i></div>
                     <div><div class="stat-value" id="statCustomers">—</div><div class="stat-label">Total Customers</div></div>
@@ -94,7 +94,7 @@
             </div>
 
             <!-- Row 2: Transactions + Loans -->
-            <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+            <div class="stat-grid">
                 <div class="stat-card green clickable" onclick="window.location.href='transactions.html?date=today'" data-testid="stat-txn-today">
                     <div class="stat-icon green"><i class="ti ti-arrows-exchange"></i></div>
                     <div><div class="stat-value" id="statTxnToday">—</div><div class="stat-label">Transactions Today</div></div>
@@ -114,7 +114,7 @@
             </div>
 
             <!-- Row 3: Credit Cards -->
-            <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+            <div class="stat-grid">
                 <div class="stat-card blue clickable" onclick="window.location.href='credit-cards.html'" data-testid="stat-cards">
                     <div class="stat-icon blue"><i class="ti ti-credit-card"></i></div>
                     <div><div class="stat-value" id="statCards">—</div><div class="stat-label">Total Cards</div></div>
