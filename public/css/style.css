@@ -917,15 +917,19 @@ tbody tr:hover { background: #f8fafd; }
    RESPONSIVE
    ============================================================ */
 @media (max-width: 768px) {
-    .sidebar { width: 60px; }
-    .sidebar-logo .logo-text,
-    .sidebar-logo .logo-sub,
-    .nav-item span,
-    .nav-section-label { display: none; }
-    .main-content { margin-left: 60px; }
     .stat-grid { grid-template-columns: 1fr 1fr; }
     .detail-grid { grid-template-columns: 1fr; }
 }
+The sidebar hiding is now handled by our new responsive CSS block lower down — so remove those old sidebar rules from here. This is the conflict causing the hamburger not to show and sidebar not hiding properly.
+
+Save, commit and push to dev:
+
+bash
+git add public/css/style.css
+git commit -m "Fix responsive sidebar conflict in CSS"
+git push origin dev
+
+
 
 /* ============================================================
    RESPONSIVE DESIGN — FinCore Bank
