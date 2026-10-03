@@ -200,7 +200,35 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                 <div class="form-group" style="grid-column:1/-1;">
                     <label class="form-label">Customer ID *</label>
-                    <input type="number" class="form-control" id="nlCustomerId" data-testid="nl-customer-id" placeholder="Enter customer ID">
+                    <input type="number" class="form-control" id="nlCustomerId" data-testid="nl-customer-id" placeholder="Enter customer ID" autocomplete="off">
+                </div>
+                <!-- Credit Score Panel — shown after customer ID lookup -->
+                <div id="creditScorePanel" style="grid-column:1/-1;display:none;">
+                    <div id="creditScoreCard" style="border-radius:10px;padding:14px 16px;border:1px solid var(--border);background:var(--bg-secondary);">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                            <div>
+                                <div id="csCustomerName" style="font-weight:600;font-size:14px;"></div>
+                                <div id="csBreakdown" style="font-size:12px;color:var(--text-muted);margin-top:2px;"></div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div id="csScore" style="font-size:28px;font-weight:800;line-height:1;"></div>
+                                <div id="csRating" style="font-size:12px;font-weight:600;margin-top:2px;"></div>
+                            </div>
+                        </div>
+                        <!-- Score bar -->
+                        <div style="height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin-top:4px;">
+                            <div id="csBar" style="height:100%;border-radius:3px;transition:width 0.6s ease;"></div>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:3px;">
+                            <span>300</span><span>Poor</span><span>Fair</span><span>Good</span><span>900</span>
+                        </div>
+                        <div id="csIneligibleMsg" style="display:none;margin-top:10px;padding:8px 12px;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;font-size:12px;color:#DC2626;">
+                            <i class="ti ti-alert-circle"></i> <span id="csIneligibleText"></span>
+                        </div>
+                    </div>
+                </div>
+                <div id="csLoadingMsg" style="grid-column:1/-1;display:none;font-size:13px;color:var(--text-muted);">
+                    <i class="ti ti-loader" style="animation:spin 1s linear infinite;display:inline-block;"></i> Checking credit score…
                 </div>
                 <div class="form-group">
                     <label class="form-label">Loan Type *</label>
@@ -664,8 +692,73 @@ document.getElementById('addLoanBtn').addEventListener('click', () => {
     document.getElementById('nlRate').value        = '';
     document.getElementById('nlStartDate').value   = new Date().toISOString().split('T')[0];
     document.getElementById('emiPreview').style.display = 'none';
+    document.getElementById('creditScorePanel').style.display = 'none';
+    document.getElementById('csLoadingMsg').style.display = 'none';
+    document.getElementById('saveNewLoanBtn').disabled = true;
     document.getElementById('newLoanModal').classList.add('open');
 });
+
+// ── Credit Score Lookup on Customer ID ───────────────────────────────────────
+let csLookupTimer = null;
+document.getElementById('nlCustomerId').addEventListener('input', () => {
+    clearTimeout(csLookupTimer);
+    const id = document.getElementById('nlCustomerId').value.trim();
+    document.getElementById('creditScorePanel').style.display = 'none';
+    document.getElementById('csLoadingMsg').style.display = 'none';
+    document.getElementById('saveNewLoanBtn').disabled = true;
+
+    if (!id || isNaN(parseInt(id))) return;
+
+    document.getElementById('csLoadingMsg').style.display = 'block';
+    csLookupTimer = setTimeout(() => fetchCreditScore(id), 700);
+});
+
+async function fetchCreditScore(customerId) {
+    try {
+        const res  = await authFetch(`${API}/loans/credit-score/${customerId}`);
+        const data = await res.json();
+
+        document.getElementById('csLoadingMsg').style.display = 'none';
+
+        if (!res.ok) {
+            document.getElementById('newLoanError').textContent = data.error || 'Customer not found.';
+            document.getElementById('newLoanError').classList.remove('d-none');
+            return;
+        }
+        document.getElementById('newLoanError').classList.add('d-none');
+
+        // Populate card
+        document.getElementById('csCustomerName').textContent = `${data.customer_name} (ID: ${data.customer_id})`;
+        document.getElementById('csBreakdown').textContent    = data.breakdown;
+        document.getElementById('csScore').textContent        = data.score;
+        document.getElementById('csScore').style.color        = data.color;
+        document.getElementById('csRating').textContent       = data.rating;
+        document.getElementById('csRating').style.color       = data.color;
+
+        // Score bar: map 300–900 → 0–100%
+        const pct = Math.round(((data.score - 300) / 600) * 100);
+        document.getElementById('csBar').style.width      = pct + '%';
+        document.getElementById('csBar').style.background = data.color;
+
+        // Ineligible message
+        const ineligDiv  = document.getElementById('csIneligibleMsg');
+        const ineligText = document.getElementById('csIneligibleText');
+        if (!data.eligible) {
+            ineligDiv.style.display = 'block';
+            ineligText.textContent  = `Credit score too low (${data.score}) — loan cannot be created. Customer must clear existing defaults first.`;
+        } else {
+            ineligDiv.style.display = 'none';
+        }
+
+        document.getElementById('creditScorePanel').style.display = 'block';
+        document.getElementById('saveNewLoanBtn').disabled = !data.eligible;
+
+    } catch (err) {
+        document.getElementById('csLoadingMsg').style.display = 'none';
+        document.getElementById('newLoanError').textContent = 'Failed to fetch credit score.';
+        document.getElementById('newLoanError').classList.remove('d-none');
+    }
+}
 
 // Live EMI preview
 ['nlPrincipal','nlRate','nlTenure'].forEach(id => {
