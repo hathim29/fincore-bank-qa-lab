@@ -60,7 +60,7 @@
             <a href="credit-cards.html" class="nav-item" data-testid="nav-credit-cards"><i class="ti ti-credit-card nav-icon"></i><span>Credit Cards</span></a>
         </nav>
         <div class="sidebar-footer">
-            <a href="login.html" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
+            <a href="#" onclick="fincoreLogout()" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
         </div>
     </aside>
 
@@ -232,7 +232,7 @@
 </div>
 
 <script>
-const API = 'http://localhost:3000/api';
+const API = '/api';
 const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
 if (!user.username) window.location.href = 'login.html';
 document.getElementById('topbarUser').textContent = user.username || '';
@@ -268,10 +268,10 @@ function channelChip(c) { return `<span class="channel-chip">${c}</span>`; }
 async function loadStats() {
     try {
         const [tot,dep,wit,tra] = await Promise.all([
-            fetch(`${API}/transactions?limit=1`).then(r=>r.json()),
-            fetch(`${API}/transactions?limit=1&transaction_type=deposit`).then(r=>r.json()),
-            fetch(`${API}/transactions?limit=1&transaction_type=withdrawal`).then(r=>r.json()),
-            fetch(`${API}/transactions?limit=1&transaction_type=transfer`).then(r=>r.json()),
+            authFetch(`${API}/transactions?limit=1`).then(r=>r.json()),
+            authFetch(`${API}/transactions?limit=1&transaction_type=deposit`).then(r=>r.json()),
+            authFetch(`${API}/transactions?limit=1&transaction_type=withdrawal`).then(r=>r.json()),
+            authFetch(`${API}/transactions?limit=1&transaction_type=transfer`).then(r=>r.json()),
         ]);
         document.getElementById('statTotal').textContent      = tot.total;
         document.getElementById('statDeposit').textContent    = dep.total;
@@ -293,7 +293,7 @@ async function loadTransactions(page=1) {
         if (currentStatus)  p.append('status', currentStatus);
         if (currentDate)    p.append('date', currentDate);
 
-        const res  = await fetch(`${API}/transactions?${p}`);
+        const res  = await authFetch(`${API}/transactions?${p}`);
         const data = await res.json();
 
         document.getElementById('totalCount').textContent =
@@ -362,7 +362,7 @@ async function viewTransaction(id) {
     modal.classList.add('open');
 
     try {
-        const res = await fetch(`${API}/transactions/${id}`);
+        const res = await authFetch(`${API}/transactions/${id}`);
         const t   = await res.json();
 
         document.getElementById('viewModalTitle').innerHTML =
@@ -476,7 +476,7 @@ document.getElementById('saveTxnBtn').addEventListener('click', async () => {
 
     try {
         // First resolve account number to account ID
-        const accRes  = await fetch(`${API}/accounts?limit=100`);
+        const accRes  = await authFetch(`${API}/accounts?limit=100`);
         const accData = await accRes.json();
         const account = accData.data.find(a => a.account_number === accountNum);
 
@@ -489,7 +489,7 @@ document.getElementById('saveTxnBtn').addEventListener('click', async () => {
             errDiv.classList.remove('d-none'); return;
         }
 
-        const res = await fetch(`${API}/transactions`, {
+        const res = await authFetch(`${API}/transactions`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -553,6 +553,7 @@ document.getElementById('rowsPerPage').addEventListener('change', function() {
 loadStats();
 loadTransactions();
 </script>
+<script src="js/auth.js"></script>
 <script src="js/sidebar.js"></script>
 </body>
 </html>

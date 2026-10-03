@@ -6,91 +6,325 @@
     <title>FinCore Bank — Login</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        .otp-inputs { display: flex; gap: 10px; justify-content: center; margin: 16px 0; }
+        .otp-inputs input {
+            width: 44px; height: 52px; text-align: center; font-size: 22px; font-weight: 700;
+            border: 2px solid var(--border); border-radius: 10px; background: var(--bg-secondary);
+            color: var(--text-primary); transition: border-color 0.2s;
+        }
+        .otp-inputs input:focus { outline: none; border-color: var(--primary); }
+        .otp-inputs input.filled { border-color: var(--primary); }
+        .otp-timer { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 4px; }
+        .otp-timer span { color: var(--danger, #ef4444); font-weight: 600; }
+        .resend-link { font-size: 13px; text-align: center; margin-top: 10px; }
+        .resend-link a { color: var(--primary); cursor: pointer; text-decoration: none; }
+        .resend-link a:hover { text-decoration: underline; }
+        .step-indicator { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
+        .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background 0.3s; }
+        .step-dot.active { background: var(--primary); }
+        .step-dot.done { background: var(--success, #22c55e); }
+        #step-otp { display: none; }
+        .otp-hint {
+            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px;
+            padding: 10px 14px; font-size: 12px; color: var(--text-muted); margin-bottom: 12px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .otp-hint code { color: var(--primary); font-weight: 700; font-size: 15px; letter-spacing: 2px; }
+    </style>
 </head>
 <body>
 <div class="login-wrapper">
     <div class="login-card">
         <div class="login-logo">
-            <img src="images/loginPage_logo.png" alt="FinCore Bank" style="width:100%;max-width:316px;height:auto;display:block;margin:0 auto 8px;">
+            <img src="images/loginPage_logo.png" alt="FinCore Bank"
+                 style="width:100%;max-width:316px;height:auto;display:block;margin:0 auto 8px;">
         </div>
 
-        <div id="loginError" class="alert alert-danger d-none"></div>
-        <div id="loginSuccess" class="alert alert-success d-none"></div>
-
-        <div class="form-group">
-            <label class="form-label">Username</label>
-            <input type="text" class="form-control" id="username"
-                   data-testid="username-input" placeholder="Enter username" autocomplete="off">
+        <!-- Step indicator -->
+        <div class="step-indicator">
+            <div class="step-dot active" id="dot1"></div>
+            <div class="step-dot" id="dot2"></div>
         </div>
 
-        <div class="form-group">
-            <label class="form-label">Password</label>
-            <input type="password" class="form-control" id="password"
-                   data-testid="password-input" placeholder="Enter password">
+        <div id="alertBox" class="alert alert-danger d-none"></div>
+
+        <!-- ── STEP 1: Credentials ──────────────────────────── -->
+        <div id="step-credentials">
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-control" id="username"
+                       data-testid="username-input" placeholder="Enter username" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-control" id="password"
+                       data-testid="password-input" placeholder="Enter password">
+            </div>
+            <button class="btn btn-primary w-100" id="loginBtn"
+                    data-testid="login-button" style="margin-top:8px;padding:10px;">
+                <i class="ti ti-login"></i> <span id="loginBtnText">Sign In</span>
+            </button>
+            <p style="text-align:center;margin-top:20px;font-size:12px;color:var(--text-muted);">
+                Demo: <strong>admin / admin123</strong> &nbsp;|&nbsp; <strong>viewer / viewer123</strong>
+            </p>
         </div>
 
-        <button class="btn btn-primary w-100" id="loginBtn"
-                data-testid="login-button" style="margin-top: 8px; padding: 10px;">
-            <i class="ti ti-login"></i> Sign In
-        </button>
+        <!-- ── STEP 2: OTP ──────────────────────────────────── -->
+        <div id="step-otp">
+            <p style="text-align:center;font-size:14px;color:var(--text-muted);margin-bottom:12px;">
+                Enter the 6-digit OTP sent to your registered device.
+            </p>
 
-        <p style="text-align:center; margin-top: 20px; font-size: 12px; color: var(--text-muted);">
-            Demo: <strong>admin / admin123</strong> &nbsp;|&nbsp; <strong>viewer / viewer123</strong>
-        </p>
+            <!-- QA Lab hint: shows the OTP so testers can verify the flow -->
+            <div class="otp-hint" id="otpHint">
+                <i class="ti ti-shield-check" style="color:var(--primary);font-size:16px;"></i>
+                <span>QA Lab — OTP: <code id="otpDisplay">------</code></span>
+            </div>
+
+            <div class="otp-inputs">
+                <input type="text" maxlength="1" class="otp-box" data-testid="otp-0" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-box" data-testid="otp-1" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-box" data-testid="otp-2" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-box" data-testid="otp-3" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-box" data-testid="otp-4" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-box" data-testid="otp-5" inputmode="numeric">
+            </div>
+
+            <div class="otp-timer">OTP expires in <span id="timerDisplay">5:00</span></div>
+
+            <button class="btn btn-primary w-100" id="verifyBtn"
+                    data-testid="otp-verify-button" style="margin-top:14px;padding:10px;">
+                <i class="ti ti-check"></i> <span id="verifyBtnText">Verify OTP</span>
+            </button>
+
+            <div class="resend-link">
+                Didn't receive it? <a id="resendLink" data-testid="otp-resend">Resend OTP</a>
+            </div>
+
+            <div style="text-align:center;margin-top:12px;">
+                <a href="#" id="backToLogin" data-testid="back-to-login"
+                   style="font-size:13px;color:var(--text-muted);">← Back to login</a>
+            </div>
+        </div>
+
     </div>
 </div>
 
 <script>
-    const API = 'http://localhost:3000/api';
+const API = '';  // same origin
+let pendingUsername = '';
+let timerInterval  = null;
 
-    document.getElementById('loginBtn').addEventListener('click', async () => {
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
-        const errorDiv = document.getElementById('loginError');
-        const successDiv = document.getElementById('loginSuccess');
+// ── Alert helper ──────────────────────────────────────────────────────────────
+function showAlert(msg, type = 'danger') {
+    const box = document.getElementById('alertBox');
+    box.className = `alert alert-${type}`;
+    box.textContent = msg;
+    box.classList.remove('d-none');
+}
+function hideAlert() { document.getElementById('alertBox').classList.add('d-none'); }
 
-        errorDiv.classList.add('d-none');
-        successDiv.classList.add('d-none');
+// ── Step 1: Login ─────────────────────────────────────────────────────────────
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        if (document.getElementById('step-otp').style.display !== 'none') {
+            doVerify();
+        } else {
+            doLogin();
+        }
+    }
+});
 
-        if (!username || !password) {
-            errorDiv.textContent = 'Username and password are required.';
-            errorDiv.classList.remove('d-none');
+async function doLogin() {
+    const btn = document.getElementById('loginBtn');
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    hideAlert();
+
+    if (!username || !password) {
+        showAlert('Username and password are required.');
+        return;
+    }
+
+    btn.disabled = true;
+    document.getElementById('loginBtnText').textContent = 'Verifying...';
+
+    try {
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showAlert(data.error || 'Login failed.');
             return;
         }
 
-        try {
-            const res = await fetch(`${API}/customers?limit=1`);
-            if (!res.ok) throw new Error('Server error');
+        pendingUsername = username;
 
-            // Simple credential check against known users
-            const validUsers = [
-                { username: 'admin', password: 'admin123', role: 'admin' },
-                { username: 'viewer', password: 'viewer123', role: 'viewer' }
-            ];
+        // Show OTP in QA hint panel
+        if (data.otp_preview) {
+            document.getElementById('otpDisplay').textContent = data.otp_preview;
+        }
 
-            const user = validUsers.find(u => u.username === username && u.password === password);
+        // Switch to OTP step
+        document.getElementById('step-credentials').style.display = 'none';
+        document.getElementById('step-otp').style.display = 'block';
+        document.getElementById('dot1').classList.remove('active');
+        document.getElementById('dot1').classList.add('done');
+        document.getElementById('dot2').classList.add('active');
 
-            if (!user) {
-                errorDiv.textContent = 'Invalid username or password.';
-                errorDiv.classList.remove('d-none');
-                return;
-            }
+        startTimer(data.expires_in || 300);
+        document.querySelector('.otp-box').focus();
 
-            sessionStorage.setItem('fincore_user', JSON.stringify({ username: user.username, role: user.role }));
-            successDiv.textContent = 'Login successful! Redirecting...';
-            successDiv.classList.remove('d-none');
-            setTimeout(() => window.location.href = 'dashboard.html', 800);
+    } catch (err) {
+        showAlert('Cannot connect to server. Make sure server is running.');
+    } finally {
+        btn.disabled = false;
+        document.getElementById('loginBtnText').textContent = 'Sign In';
+    }
+}
 
-        } catch (err) {
-            errorDiv.textContent = 'Cannot connect to server. Make sure server is running.';
-            errorDiv.classList.remove('d-none');
+// ── OTP box keyboard navigation ───────────────────────────────────────────────
+document.querySelectorAll('.otp-box').forEach((box, idx, all) => {
+    box.addEventListener('input', () => {
+        box.value = box.value.replace(/\D/g, '');
+        box.classList.toggle('filled', box.value.length > 0);
+        if (box.value && idx < all.length - 1) all[idx + 1].focus();
+        if (getOTP().length === 6) doVerify();
+    });
+    box.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !box.value && idx > 0) {
+            all[idx - 1].value = '';
+            all[idx - 1].classList.remove('filled');
+            all[idx - 1].focus();
         }
     });
-
-    // Enter key support
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') document.getElementById('loginBtn').click();
+    box.addEventListener('paste', e => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+        all.forEach((b, i) => {
+            b.value = text[i] || '';
+            b.classList.toggle('filled', !!b.value);
+        });
+        if (text.length === 6) doVerify();
     });
+});
+
+function getOTP() {
+    return [...document.querySelectorAll('.otp-box')].map(b => b.value).join('');
+}
+
+// ── Step 2: Verify OTP ────────────────────────────────────────────────────────
+document.getElementById('verifyBtn').addEventListener('click', doVerify);
+
+async function doVerify() {
+    const otp = getOTP();
+    hideAlert();
+
+    if (otp.length < 6) {
+        showAlert('Please enter all 6 digits.');
+        return;
+    }
+
+    const btn = document.getElementById('verifyBtn');
+    btn.disabled = true;
+    document.getElementById('verifyBtnText').textContent = 'Verifying...';
+
+    try {
+        const res = await fetch('/api/auth/otp/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: pendingUsername, otp })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showAlert(data.error || 'OTP verification failed.');
+            document.querySelectorAll('.otp-box').forEach(b => { b.value = ''; b.classList.remove('filled'); });
+            document.querySelector('.otp-box').focus();
+            return;
+        }
+
+        // Store JWT and user info
+        sessionStorage.setItem('fincore_token', data.token);
+        sessionStorage.setItem('fincore_user',  JSON.stringify(data.user));
+
+        clearInterval(timerInterval);
+        showAlert('Login successful! Redirecting...', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 800);
+
+    } catch (err) {
+        showAlert('Cannot connect to server.');
+    } finally {
+        btn.disabled = false;
+        document.getElementById('verifyBtnText').textContent = 'Verify OTP';
+    }
+}
+
+// ── Resend OTP ────────────────────────────────────────────────────────────────
+document.getElementById('resendLink').addEventListener('click', async () => {
+    hideAlert();
+    try {
+        const res = await fetch('/api/auth/otp/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: pendingUsername })
+        });
+        const data = await res.json();
+        if (data.otp_preview) {
+            document.getElementById('otpDisplay').textContent = data.otp_preview;
+        }
+        document.querySelectorAll('.otp-box').forEach(b => { b.value = ''; b.classList.remove('filled'); });
+        document.querySelector('.otp-box').focus();
+        startTimer(300);
+        showAlert('OTP resent.', 'success');
+    } catch (err) {
+        showAlert('Failed to resend OTP.');
+    }
+});
+
+// ── Back to login ─────────────────────────────────────────────────────────────
+document.getElementById('backToLogin').addEventListener('click', e => {
+    e.preventDefault();
+    clearInterval(timerInterval);
+    document.getElementById('step-otp').style.display = 'none';
+    document.getElementById('step-credentials').style.display = 'block';
+    document.getElementById('dot1').classList.remove('done');
+    document.getElementById('dot1').classList.add('active');
+    document.getElementById('dot2').classList.remove('active');
+    hideAlert();
+});
+
+// ── Countdown timer ───────────────────────────────────────────────────────────
+function startTimer(seconds) {
+    clearInterval(timerInterval);
+    let remaining = seconds;
+    const display = document.getElementById('timerDisplay');
+
+    function tick() {
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        display.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        if (remaining <= 0) {
+            clearInterval(timerInterval);
+            display.textContent = '0:00';
+            showAlert('OTP expired. Please login again.');
+        }
+        remaining--;
+    }
+    tick();
+    timerInterval = setInterval(tick, 1000);
+}
+
+// ── Redirect if already logged in ────────────────────────────────────────────
+if (sessionStorage.getItem('fincore_token')) {
+    window.location.href = 'dashboard.html';
+}
 </script>
 </body>
 </html>

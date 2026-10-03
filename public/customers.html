@@ -48,7 +48,7 @@
             </a>
         </nav>
         <div class="sidebar-footer">
-            <a href="login.html" class="nav-item" data-testid="logout-button">
+            <a href="#" onclick="fincoreLogout()" class="nav-item" data-testid="logout-button">
                 <i class="ti ti-logout nav-icon"></i>
                 <span>Logout</span>
             </a>
@@ -288,7 +288,7 @@
 </div>
 
 <script>
-    const API = 'http://localhost:3000/api';
+    const API = '/api';
 
     // Auth check
     const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
@@ -328,7 +328,7 @@
                 search: currentSearch,
             });
 
-            const res = await fetch(`${API}/customers?${params}`);
+            const res = await authFetch(`${API}/customers?${params}`);
             const data = await res.json();
 
             document.getElementById('totalCount').textContent = `${data.total} customers found`;
@@ -419,7 +419,7 @@
         modal.classList.add('open');
 
         try {
-            const res = await fetch(`${API}/customers/${id}`);
+            const res = await authFetch(`${API}/customers/${id}`);
             const c = await res.json();
 
             document.getElementById('viewModalTitle').textContent = `${c.name} · #${c.id}`;
@@ -537,7 +537,7 @@
         }
 
         try {
-            const res = await fetch(`${API}/customers`, {
+            const res = await authFetch(`${API}/customers`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, phone, city, kyc_status: kyc })
@@ -610,7 +610,7 @@
             return;
         }
         try {
-            const res = await fetch(`${API}/customers/${id}`, {
+            const res = await authFetch(`${API}/customers/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, phone, city, kyc_status: kyc })
@@ -663,7 +663,7 @@
         sucDiv.classList.add('d-none');
 
         try {
-            const res = await fetch(`${API}/accounts`, {
+            const res = await authFetch(`${API}/accounts`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ customer_id: customerId, account_type: accountType, balance })
@@ -728,6 +728,7 @@
     // ----------------------------------------
     loadCustomers();
 </script>
+<script src="js/auth.js"></script>
 <script src="js/sidebar.js"></script>
 </body>
 </html>

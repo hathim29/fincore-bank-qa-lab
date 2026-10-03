@@ -48,7 +48,7 @@
             </a>
         </nav>
         <div class="sidebar-footer">
-            <a href="login.html" class="nav-item" data-testid="logout-button">
+            <a href="#" onclick="fincoreLogout()" class="nav-item" data-testid="logout-button">
                 <i class="ti ti-logout nav-icon"></i>
                 <span>Logout</span>
             </a>
@@ -200,7 +200,7 @@
 </div>
 
 <script>
-    const API = 'http://localhost:3000/api';
+    const API = '/api';
 
     // Auth check
     const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
@@ -208,11 +208,11 @@
     document.getElementById('topbarUser').textContent = user.username || '';
     document.getElementById('topbarAvatar').textContent = (user.username || 'A')[0].toUpperCase();
 
-    function fmt(n) { return parseFloat(n).toLocaleString('en-IN', { maximumFractionDigits: 0 }); }
-    function fmtAmt(n) { return '₹' + parseFloat(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function fmt(n) { const v = parseFloat(n); return isNaN(v) ? '0' : v.toLocaleString('en-IN', { maximumFractionDigits: 0 }); }
+    function fmtAmt(n) { const v = parseFloat(n); return '₹' + (isNaN(v) ? '0.00' : v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })); }
 
     async function loadStats() {
-        const res = await fetch(`${API}/dashboard/stats`);
+        const res = await authFetch(`${API}/dashboard/stats`);
         const d = await res.json();
         document.getElementById('statCustomers').textContent      = fmt(d.total_customers);
         document.getElementById('statAccounts').textContent       = fmt(d.active_accounts);
@@ -229,7 +229,7 @@
     }
 
     async function loadRecentTxns() {
-        const res = await fetch(`${API}/dashboard/recent-transactions`);
+        const res = await authFetch(`${API}/dashboard/recent-transactions`);
         const rows = await res.json();
         const tbody = document.getElementById('recentTxnBody');
         if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-muted" style="text-align:center;padding:20px;">No transactions today</td></tr>'; return; }
@@ -248,7 +248,7 @@
     }
 
     async function loadAlerts() {
-        const res = await fetch(`${API}/dashboard/alerts`);
+        const res = await authFetch(`${API}/dashboard/alerts`);
         const d = await res.json();
 
         const overdueDiv = document.getElementById('overdueAlerts');
@@ -280,6 +280,7 @@
     loadRecentTxns();
     loadAlerts();
 </script>
+<script src="js/auth.js"></script>
 <script src="js/sidebar.js"></script>
 </body>
 </html>

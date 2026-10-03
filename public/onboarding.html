@@ -306,7 +306,7 @@
             <a href="credit-cards.html" class="nav-item" data-testid="nav-credit-cards"><i class="ti ti-credit-card nav-icon"></i><span>Credit Cards</span></a>
         </nav>
         <div class="sidebar-footer">
-            <a href="login.html" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
+            <a href="#" onclick="fincoreLogout()" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
         </div>
     </aside>
 
@@ -666,9 +666,10 @@
     </div>
 </div>
 
+<script src="js/auth.js"></script>
 <script src="js/sidebar.js"></script>
 <script>
-const API = 'http://localhost:3000/api';
+const API = '/api';
 const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
 if (!user.username) window.location.href = 'login.html';
 if (user.role !== 'admin') window.location.href = 'customers.html'; // admin only
@@ -903,7 +904,7 @@ async function submitApplication() {
 
     try {
         // Create customer
-        const custRes = await fetch(`${API}/customers`, {
+        const custRes = await authFetch(`${API}/customers`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -918,7 +919,7 @@ async function submitApplication() {
         if (!custRes.ok) throw new Error(customer.error || 'Failed to create customer');
 
         // Create account
-        const accRes = await fetch(`${API}/accounts`, {
+        const accRes = await authFetch(`${API}/accounts`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

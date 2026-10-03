@@ -51,7 +51,7 @@
             <a href="credit-cards.html" class="nav-item" data-testid="nav-credit-cards"><i class="ti ti-credit-card nav-icon"></i><span>Credit Cards</span></a>
         </nav>
         <div class="sidebar-footer">
-            <a href="login.html" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
+            <a href="#" onclick="fincoreLogout()" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
         </div>
     </aside>
 
@@ -203,7 +203,7 @@
 </div>
 
 <script>
-const API = 'http://localhost:3000/api';
+const API = '/api';
 const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
 if (!user.username) window.location.href = 'login.html';
 document.getElementById('topbarUser').textContent = user.username || '';
@@ -236,7 +236,7 @@ document.getElementById('saveNewAccountBtn').addEventListener('click', async () 
         errDiv.classList.remove('d-none'); return;
     }
     try {
-        const res = await fetch(`${API}/accounts`, {
+        const res = await authFetch(`${API}/accounts`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ customer_id: parseInt(customerId), account_type: accountType, balance: parseFloat(balance) })
@@ -294,7 +294,7 @@ async function loadAccounts(page=1) {
         const p = new URLSearchParams({page,limit});
         if (currentType) p.append('account_type',currentType);
         if (currentStatus) p.append('status',currentStatus);
-        const res  = await fetch(`${API}/accounts?${p}`);
+        const res  = await authFetch(`${API}/accounts?${p}`);
         const data = await res.json();
         document.getElementById('totalCount').textContent = `${data.total} account${data.total!==1?'s':''} found`;
         document.getElementById('pageInfo').textContent   = `Page ${page} of ${Math.ceil(data.total/limit)||1}`;
@@ -352,8 +352,8 @@ async function viewAccount(id) {
     footer.innerHTML=''; modal.classList.add('open');
     try {
         const [ar,auditR] = await Promise.all([
-            fetch(`${API}/accounts/${id}`),
-            fetch(`${API}/accounts/${id}/audit`)
+            authFetch(`${API}/accounts/${id}`),
+            authFetch(`${API}/accounts/${id}/audit`)
         ]);
         const a=await ar.json(), audit=await auditR.json();
         document.getElementById('viewModalTitle').innerHTML =
@@ -457,7 +457,7 @@ document.getElementById('confirmActionBtn').addEventListener('click', async () =
     const reason=document.getElementById('actionReason').value.trim();
     if (!reason) return;
     try {
-        const res=await fetch(`${API}/accounts/${accountId}`,{
+        const res=await authFetch(`${API}/accounts/${accountId}`,{
             method:'PUT', headers:{'Content-Type':'application/json'},
             body:JSON.stringify({status:newStatus,reason,performed_by:user.username})
         });
@@ -492,7 +492,7 @@ if (searchInput) {
         if (q.length < 2) { searchDropdown.style.display = 'none'; return; }
         searchTimer = setTimeout(async () => {
             try {
-                const res  = await fetch(`${API}/accounts/search?q=${encodeURIComponent(q)}`);
+                const res  = await authFetch(`${API}/accounts/search?q=${encodeURIComponent(q)}`);
                 const data = await res.json();
                 if (!data.results || !data.results.length) {
                     searchDropdown.innerHTML = `
@@ -570,6 +570,7 @@ if (searchInput) {
 
 loadAccounts();
 </script>
+<script src="js/auth.js"></script>
 <script src="js/sidebar.js"></script>
 </body>
 </html>

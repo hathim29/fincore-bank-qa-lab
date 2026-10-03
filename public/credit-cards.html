@@ -101,7 +101,7 @@
             <a href="credit-cards.html" class="nav-item active" data-testid="nav-credit-cards"><i class="ti ti-credit-card nav-icon"></i><span>Credit Cards</span></a>
         </nav>
         <div class="sidebar-footer">
-            <a href="login.html" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
+            <a href="#" onclick="fincoreLogout()" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
         </div>
     </aside>
 
@@ -311,7 +311,7 @@
 </div>
 
 <script>
-const API = 'http://localhost:3000/api';
+const API = '/api';
 const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
 if (!user.username) window.location.href = 'login.html';
 document.getElementById('topbarUser').textContent = user.username || '';
@@ -359,11 +359,11 @@ function utilPct(outstanding, limit) {
 async function loadStats() {
     try {
         const [tot,act,blk] = await Promise.all([
-            fetch(`${API}/credit-cards?limit=1`).then(r=>r.json()),
-            fetch(`${API}/credit-cards?limit=1&status=active`).then(r=>r.json()),
-            fetch(`${API}/credit-cards?limit=1&status=blocked`).then(r=>r.json()),
+            authFetch(`${API}/credit-cards?limit=1`).then(r=>r.json()),
+            authFetch(`${API}/credit-cards?limit=1&status=active`).then(r=>r.json()),
+            authFetch(`${API}/credit-cards?limit=1&status=blocked`).then(r=>r.json()),
         ]);
-        const alerts = await fetch(`${API}/dashboard/alerts`).then(r=>r.json());
+        const alerts = await authFetch(`${API}/dashboard/alerts`).then(r=>r.json());
         document.getElementById('statTotal').textContent    = tot.total;
         document.getElementById('statActive').textContent   = act.total;
         document.getElementById('statBlocked').textContent  = blk.total;
@@ -382,7 +382,7 @@ async function loadCards(page=1) {
         if (currentStatus) p.append('status', currentStatus);
         if (currentType)   p.append('card_type', currentType);
 
-        const res  = await fetch(`${API}/credit-cards?${p}`);
+        const res  = await authFetch(`${API}/credit-cards?${p}`);
         const data = await res.json();
 
         document.getElementById('totalCount').textContent = `${data.total} card${data.total!==1?'s':''} found`;
@@ -478,7 +478,7 @@ async function viewCard(id) {
     modal.classList.add('open');
 
     try {
-        const res  = await fetch(`${API}/credit-cards/${id}`);
+        const res  = await authFetch(`${API}/credit-cards/${id}`);
         const card = await res.json();
 
         const outstanding = parseFloat(card.outstanding_balance);
@@ -647,7 +647,7 @@ document.getElementById('confirmPaymentBtn').addEventListener('click', async () 
     }
 
     try {
-        const res = await fetch(`${API}/credit-cards/${cardId}/payment`, {
+        const res = await authFetch(`${API}/credit-cards/${cardId}/payment`, {
             method: 'POST',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify({ payment_type: type, amount })
@@ -694,7 +694,7 @@ document.getElementById('confirmBlockBtn').addEventListener('click', async () =>
     if (!pendingBlock) return;
     const { cardId, newStatus } = pendingBlock;
     try {
-        const res = await fetch(`${API}/credit-cards/${cardId}/status`, {
+        const res = await authFetch(`${API}/credit-cards/${cardId}/status`, {
             method: 'PUT',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify({ status: newStatus })
@@ -732,7 +732,7 @@ document.getElementById('saveNewCardBtn').addEventListener('click', async () => 
     if (!customerId) { errDiv.textContent='Customer ID is required.'; errDiv.classList.remove('d-none'); return; }
 
     try {
-        const res = await fetch(`${API}/credit-cards`, {
+        const res = await authFetch(`${API}/credit-cards`, {
             method: 'POST',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify({ customer_id: parseInt(customerId), card_type: cardType, credit_limit: parseFloat(creditLimit) })
@@ -783,6 +783,7 @@ document.getElementById('rowsPerPage').addEventListener('change', function()  { 
 loadStats();
 loadCards();
 </script>
+<script src="js/auth.js"></script>
 <script src="js/sidebar.js"></script>
 </body>
 </html>

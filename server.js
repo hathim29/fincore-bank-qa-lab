@@ -3,6 +3,7 @@ const cors = require('cors');
 const pool = require('./db/connection');
 const { swaggerUi, swaggerSpec } = require('./swagger');
 const testRoutes = require('./routes/test');
+const { requireAuth } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,14 +12,17 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Routes
-app.use('/api/customers',        require('./routes/customers'));
-app.use('/api/accounts',         require('./routes/accounts'));
-app.use('/api/loans',            require('./routes/loans'));
-app.use('/api/loan-repayments',  require('./routes/loanRepayments'));
-app.use('/api/credit-cards',     require('./routes/creditCards'));
-app.use('/api/transactions',     require('./routes/transactions'));
-app.use('/api/dashboard',        require('./routes/dashboard'));
+// ── Public routes (no auth required) ──────────────────────────────────────────
+app.use('/api/auth', require('./routes/auth'));
+
+// ── Protected routes (JWT required) ───────────────────────────────────────────
+app.use('/api/customers',        requireAuth, require('./routes/customers'));
+app.use('/api/accounts',         requireAuth, require('./routes/accounts'));
+app.use('/api/loans',            requireAuth, require('./routes/loans'));
+app.use('/api/loan-repayments',  requireAuth, require('./routes/loanRepayments'));
+app.use('/api/credit-cards',     requireAuth, require('./routes/creditCards'));
+app.use('/api/transactions',     requireAuth, require('./routes/transactions'));
+app.use('/api/dashboard',        requireAuth, require('./routes/dashboard'));
 app.use('/api/test', testRoutes);
 
 // Health check

@@ -85,7 +85,7 @@
             <a href="credit-cards.html" class="nav-item" data-testid="nav-credit-cards"><i class="ti ti-credit-card nav-icon"></i><span>Credit Cards</span></a>
         </nav>
         <div class="sidebar-footer">
-            <a href="login.html" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
+            <a href="#" onclick="fincoreLogout()" class="nav-item" data-testid="logout-button"><i class="ti ti-logout nav-icon"></i><span>Logout</span></a>
         </div>
     </aside>
 
@@ -318,7 +318,7 @@
 </div>
 
 <script>
-const API = 'http://localhost:3000/api';
+const API = '/api';
 const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
 if (!user.username) window.location.href = 'login.html';
 document.getElementById('topbarUser').textContent = user.username || '';
@@ -371,11 +371,11 @@ function scoreLabel(score) {
 async function loadStats() {
     try {
         const [tot,act,ovd,cls,frc] = await Promise.all([
-            fetch(`${API}/loans?limit=1`).then(r=>r.json()),
-            fetch(`${API}/loans?limit=1&status=active`).then(r=>r.json()),
-            fetch(`${API}/loans?limit=1&status=overdue`).then(r=>r.json()),
-            fetch(`${API}/loans?limit=1&status=closed`).then(r=>r.json()),
-            fetch(`${API}/loans?limit=1&status=foreclosed`).then(r=>r.json()),
+            authFetch(`${API}/loans?limit=1`).then(r=>r.json()),
+            authFetch(`${API}/loans?limit=1&status=active`).then(r=>r.json()),
+            authFetch(`${API}/loans?limit=1&status=overdue`).then(r=>r.json()),
+            authFetch(`${API}/loans?limit=1&status=closed`).then(r=>r.json()),
+            authFetch(`${API}/loans?limit=1&status=foreclosed`).then(r=>r.json()),
         ]);
         document.getElementById('statTotal').textContent      = tot.total;
         document.getElementById('statActive').textContent     = act.total;
@@ -396,7 +396,7 @@ async function loadLoans(page=1) {
         if (currentStatus) p.append('status', currentStatus);
         if (currentType)   p.append('loan_type', currentType);
 
-        const res  = await fetch(`${API}/loans?${p}`);
+        const res  = await authFetch(`${API}/loans?${p}`);
         const data = await res.json();
 
         document.getElementById('totalCount').textContent = `${data.total} loan${data.total!==1?'s':''} found`;
@@ -470,7 +470,7 @@ async function viewLoan(id) {
     modal.classList.add('open');
 
     try {
-        const res  = await fetch(`${API}/loans/${id}`);
+        const res  = await authFetch(`${API}/loans/${id}`);
         const loan = await res.json();
 
         const score = loan.loan_score;
@@ -707,7 +707,7 @@ document.getElementById('saveNewLoanBtn').addEventListener('click', async () => 
     }
 
     try {
-        const res = await fetch(`${API}/loans`, {
+        const res = await authFetch(`${API}/loans`, {
             method: 'POST',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify({
@@ -763,7 +763,7 @@ document.getElementById('confirmPayEmiBtn').addEventListener('click', async () =
     sucDiv.classList.add('d-none');
 
     try {
-        const res = await fetch(`${API}/loan-repayments`, {
+        const res = await authFetch(`${API}/loan-repayments`, {
             method: 'POST',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify({ loan_id: parseInt(loanId), emi_number: currentEmiNumber, payment_channel: channel })
@@ -804,7 +804,7 @@ document.getElementById('confirmForeclosureBtn').addEventListener('click', async
     const errDiv = document.getElementById('foreclosureError');
     errDiv.classList.add('d-none');
     try {
-        const res = await fetch(`${API}/loans/${loanId}`, {
+        const res = await authFetch(`${API}/loans/${loanId}`, {
             method: 'PUT',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify({ status: 'foreclosed' })
@@ -830,7 +830,7 @@ document.getElementById('confirmForeclosureBtn').addEventListener('click', async
 // ----------------------------------------
 async function closeLoan(loanId) {
     try {
-        const res = await fetch(`${API}/loans/${loanId}`, {
+        const res = await authFetch(`${API}/loans/${loanId}`, {
             method: 'PUT',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify({ status: 'closed' })
@@ -870,6 +870,7 @@ document.getElementById('rowsPerPage').addEventListener('change', function()  { 
 loadStats();
 loadLoans();
 </script>
+<script src="js/auth.js"></script>
 <script src="js/sidebar.js"></script>
 </body>
 </html>
