@@ -198,9 +198,15 @@
             <div id="newLoanError" class="alert alert-danger d-none"></div>
             <div id="newLoanSuccess" class="alert alert-success d-none"></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                <div class="form-group" style="grid-column:1/-1;">
-                    <label class="form-label">Customer ID *</label>
-                    <input type="number" class="form-control" id="nlCustomerId" data-testid="nl-customer-id" placeholder="Enter customer ID" autocomplete="off">
+                <div class="form-group" style="grid-column:1/-1;position:relative;">
+                    <label class="form-label">Customer *</label>
+                    <input type="text" class="form-control" id="nlCustomerSearch" data-testid="nl-customer-search"
+                           placeholder="Search by name or email…" autocomplete="off">
+                    <input type="hidden" id="nlCustomerId" data-testid="nl-customer-id">
+                    <div id="nlCustomerDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999;
+                         background:var(--bg-card);border:1px solid var(--border);border-radius:8px;
+                         box-shadow:0 4px 16px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;margin-top:2px;">
+                    </div>
                 </div>
                 <!-- Credit Score Panel — shown after customer ID lookup -->
                 <div id="creditScorePanel" style="grid-column:1/-1;display:none;">
@@ -687,30 +693,76 @@ async function viewLoan(id) {
 document.getElementById('addLoanBtn').addEventListener('click', () => {
     document.getElementById('newLoanError').classList.add('d-none');
     document.getElementById('newLoanSuccess').classList.add('d-none');
-    document.getElementById('nlCustomerId').value = '';
-    document.getElementById('nlPrincipal').value  = '';
-    document.getElementById('nlRate').value        = '';
-    document.getElementById('nlStartDate').value   = new Date().toISOString().split('T')[0];
-    document.getElementById('emiPreview').style.display = 'none';
+    document.getElementById('nlCustomerSearch').value = '';
+    document.getElementById('nlCustomerId').value     = '';
+    document.getElementById('nlPrincipal').value      = '';
+    document.getElementById('nlRate').value            = '';
+    document.getElementById('nlStartDate').value       = new Date().toISOString().split('T')[0];
+    document.getElementById('emiPreview').style.display      = 'none';
     document.getElementById('creditScorePanel').style.display = 'none';
-    document.getElementById('csLoadingMsg').style.display = 'none';
+    document.getElementById('csLoadingMsg').style.display     = 'none';
+    document.getElementById('nlCustomerDropdown').style.display = 'none';
     document.getElementById('saveNewLoanBtn').disabled = true;
     document.getElementById('newLoanModal').classList.add('open');
 });
 
-// ── Credit Score Lookup on Customer ID ───────────────────────────────────────
-let csLookupTimer = null;
-document.getElementById('nlCustomerId').addEventListener('input', () => {
-    clearTimeout(csLookupTimer);
-    const id = document.getElementById('nlCustomerId').value.trim();
+// ── Customer Search Dropdown ──────────────────────────────────────────────────
+let customerSearchTimer = null;
+const nlSearch   = document.getElementById('nlCustomerSearch');
+const nlDropdown = document.getElementById('nlCustomerDropdown');
+
+nlSearch.addEventListener('input', () => {
+    clearTimeout(customerSearchTimer);
+    const q = nlSearch.value.trim();
+    // Reset credit score when customer changes
+    document.getElementById('nlCustomerId').value = '';
     document.getElementById('creditScorePanel').style.display = 'none';
-    document.getElementById('csLoadingMsg').style.display = 'none';
     document.getElementById('saveNewLoanBtn').disabled = true;
 
-    if (!id || isNaN(parseInt(id))) return;
+    if (q.length < 2) { nlDropdown.style.display = 'none'; return; }
 
+    customerSearchTimer = setTimeout(async () => {
+        try {
+            const res  = await authFetch(`${API}/customers?search=${encodeURIComponent(q)}&limit=8`);
+            const data = await res.json();
+            const rows = data.data || [];
+            if (!rows.length) {
+                nlDropdown.innerHTML = '<div style="padding:10px 14px;font-size:13px;color:var(--text-muted);">No customers found</div>';
+                nlDropdown.style.display = 'block';
+                return;
+            }
+            nlDropdown.innerHTML = rows.map(c => `
+                <div class="nl-cust-option" data-id="${c.id}" data-name="${c.name}"
+                     style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);"
+                     onmouseover="this.style.background='var(--bg-hover)'"
+                     onmouseout="this.style.background=''">
+                    <div style="font-weight:600;">${c.name}</div>
+                    <div style="color:var(--text-muted);font-size:12px;">${c.email} · ID #${c.id}</div>
+                </div>
+            `).join('');
+            nlDropdown.style.display = 'block';
+        } catch(e) { nlDropdown.style.display = 'none'; }
+    }, 350);
+});
+
+nlDropdown.addEventListener('click', (e) => {
+    const opt = e.target.closest('.nl-cust-option');
+    if (!opt) return;
+    const id   = opt.dataset.id;
+    const name = opt.dataset.name;
+    nlSearch.value = name;
+    document.getElementById('nlCustomerId').value = id;
+    nlDropdown.style.display = 'none';
+    // Auto-fetch credit score
     document.getElementById('csLoadingMsg').style.display = 'block';
-    csLookupTimer = setTimeout(() => fetchCreditScore(id), 700);
+    fetchCreditScore(id);
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    if (!nlSearch.contains(e.target) && !nlDropdown.contains(e.target)) {
+        nlDropdown.style.display = 'none';
+    }
 });
 
 async function fetchCreditScore(customerId) {
