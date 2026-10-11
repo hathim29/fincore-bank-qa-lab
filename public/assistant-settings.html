@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinCore Bank — AI Assistant Settings</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/assistant.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" data-testid="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">F</div>
+            <div>
+                <div class="logo-text">FinCore Bank</div>
+                <div class="logo-sub">QA Practice Lab</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <a href="dashboard.html" class="nav-item" data-testid="nav-dashboard">
+                <i class="ti ti-layout-dashboard nav-icon"></i><span>Dashboard</span>
+            </a>
+            <a href="accounts.html" class="nav-item" data-testid="nav-accounts">
+                <i class="ti ti-building-bank nav-icon"></i><span>Accounts</span>
+            </a>
+            <a href="transactions.html" class="nav-item" data-testid="nav-transactions">
+                <i class="ti ti-arrows-exchange nav-icon"></i><span>Transactions</span>
+            </a>
+            <div class="nav-section-label">Products</div>
+            <a href="customers.html" class="nav-item" data-testid="nav-customers">
+                <i class="ti ti-users nav-icon"></i><span>Customers</span>
+            </a>
+            <a href="loans.html" class="nav-item" data-testid="nav-loans">
+                <i class="ti ti-receipt nav-icon"></i><span>Loans</span>
+            </a>
+            <a href="credit-cards.html" class="nav-item" data-testid="nav-credit-cards">
+                <i class="ti ti-credit-card nav-icon"></i><span>Credit Cards</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="login.html" class="nav-item" data-testid="logout-button">
+                <i class="ti ti-logout nav-icon"></i><span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <div><div class="page-title">AI Assistant</div></div>
+            </div>
+            <div class="topbar-right">
+                <span id="topbarUser" style="font-size:12px; color:var(--text-muted);"></span>
+                <div class="topbar-avatar" id="topbarAvatar">A</div>
+            </div>
+        </header>
+
+        <div class="page-body">
+            <div class="fa-settings-grid">
+
+                <div class="card" style="padding:20px;" data-testid="assistant-status-card">
+                    <h3 style="margin:0 0 12px; font-size:16px;">Status</h3>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                        <span class="fa-status-pill off" id="statusPill" data-testid="assistant-status-pill">Loading…</span>
+                        <label class="fa-switch" title="Turn the assistant on or off">
+                            <input type="checkbox" id="flagToggle" data-testid="assistant-flag-toggle" aria-label="Enable FinCore Assistant">
+                            <span class="fa-slider"></span>
+                        </label>
+                    </div>
+                    <div class="fa-kv"><span>Reason</span><span id="statusReason" data-testid="assistant-status-reason">—</span></div>
+                    <div class="fa-kv"><span>Master switch (server .env)</span><span id="masterSwitch">—</span></div>
+                    <div class="fa-kv"><span>Runtime flag</span><span id="runtimeFlag">—</span></div>
+                    <div class="fa-kv"><span>Provider / model</span><span id="providerModel">—</span></div>
+                    <div class="fa-kv"><span>Environment</span><span id="envName" data-testid="assistant-env">—</span></div>
+                    <div class="fa-note" id="toggleNote" data-testid="assistant-toggle-note"></div>
+                    <div id="toggleError" class="fa-note" style="color:#b91c1c;" data-testid="assistant-toggle-error"></div>
+                </div>
+
+                <div class="card" style="padding:20px;" data-testid="assistant-usage-card">
+                    <h3 style="margin:0 0 12px; font-size:16px;">Usage today</h3>
+                    <div class="fa-kv"><span>Messages</span><span id="usageMessages" data-testid="assistant-usage-messages">—</span></div>
+                    <div class="fa-usage-bar"><div class="fa-usage-fill" id="usageFill" style="width:0%"></div></div>
+                    <div class="fa-kv" style="margin-top:8px;"><span>Input tokens</span><span id="usageIn">—</span></div>
+                    <div class="fa-kv"><span>Output tokens</span><span id="usageOut">—</span></div>
+                    <div class="fa-kv"><span>Estimated cost</span><span id="usageCost">—</span></div>
+                    <div class="fa-note">When the daily message limit is reached the assistant switches itself off until midnight. The limit is set with <code>ASSISTANT_DAILY_LIMIT</code>.</div>
+                </div>
+
+                <div class="card" style="padding:20px;">
+                    <h3 style="margin:0 0 12px; font-size:16px;">How the switch works</h3>
+                    <div class="fa-note" style="margin-top:0;">
+                        The assistant runs only when <strong>all</strong> of these are true:
+                        <ol style="padding-left:18px; margin:8px 0;">
+                            <li><code>ASSISTANT_ENABLED=true</code> in the server <code>.env</code> (emergency kill switch, needs a restart)</li>
+                            <li>An API key is set, or <code>ASSISTANT_PROVIDER=mock</code></li>
+                            <li>The runtime toggle on this page is on (no restart)</li>
+                            <li>Today's message limit has not been reached</li>
+                        </ol>
+                        The server enforces this on every request. When off, <code>POST /api/assistant/chat</code> returns <code>503</code> even if called directly.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const user = JSON.parse(sessionStorage.getItem('fincore_user') || '{}');
+    if (!user.username) window.location.href = 'login.html';
+    document.getElementById('topbarUser').textContent = user.username || '';
+    document.getElementById('topbarAvatar').textContent = (user.username || 'A')[0].toUpperCase();
+
+    const isAdmin = user.role === 'admin';
+    const headers = { 'Content-Type': 'application/json', 'x-fincore-role': user.role || 'viewer', 'x-fincore-user': user.username || '' };
+    const doFetch = (url, opts = {}) => (window.authFetch || fetch)(url, { ...opts, headers: { ...headers, ...(opts.headers || {}) } });
+
+    const REASONS = {
+        master_switch_off:   'Master switch is off (ASSISTANT_ENABLED is not true)',
+        no_api_key:          'No API key configured',
+        runtime_flag_off:    'Turned off on this page',
+        daily_limit_reached: "Today's message limit reached",
+    };
+
+    const toggle = document.getElementById('flagToggle');
+
+    function render(s) {
+        const pill = document.getElementById('statusPill');
+        pill.className = 'fa-status-pill ' + (s.enabled ? 'on' : 'off');
+        pill.innerHTML = s.enabled ? '<i class="ti ti-circle-check"></i> Enabled' : '<i class="ti ti-circle-x"></i> Disabled';
+        document.getElementById('statusReason').textContent = s.enabled ? '—' : (REASONS[s.reason] || s.reason);
+        document.getElementById('masterSwitch').textContent = s.masterSwitch ? 'On' : 'Off';
+        document.getElementById('runtimeFlag').textContent = s.runtimeFlag ? 'On' : 'Off';
+        document.getElementById('providerModel').textContent = `${s.provider} / ${s.model}`;
+        document.getElementById('envName').textContent = s.environment;
+
+        toggle.checked = s.runtimeFlag;
+        toggle.disabled = !isAdmin;
+        document.getElementById('toggleNote').textContent = isAdmin
+            ? (s.masterSwitch ? '' : 'The runtime toggle is saved, but the assistant stays off until the master switch is on.')
+            : 'Only admins can change this setting.';
+
+        const u = s.usage;
+        document.getElementById('usageMessages').textContent = `${u.messagesToday} / ${u.dailyLimit}`;
+        document.getElementById('usageFill').style.width = Math.min(100, (u.messagesToday / u.dailyLimit) * 100) + '%';
+        document.getElementById('usageIn').textContent = u.inputTokensToday.toLocaleString('en-IN');
+        document.getElementById('usageOut').textContent = u.outputTokensToday.toLocaleString('en-IN');
+        document.getElementById('usageCost').textContent = '$' + u.estimatedCostUsdToday.toFixed(4);
+    }
+
+    async function load() {
+        const res = await doFetch('/api/assistant/status');
+        render(await res.json());
+    }
+
+    toggle.addEventListener('change', async () => {
+        const err = document.getElementById('toggleError');
+        err.textContent = '';
+        toggle.disabled = true;
+        try {
+            const res = await doFetch('/api/assistant/flags', { method: 'PUT', body: JSON.stringify({ enabled: toggle.checked }) });
+            const body = await res.json();
+            if (!res.ok) throw new Error(body.error || 'Update failed');
+            render(body);
+            if (window.FinCoreAssistant) window.FinCoreAssistant.refresh();
+        } catch (e) {
+            err.textContent = e.message;
+            toggle.checked = !toggle.checked;
+            toggle.disabled = !isAdmin;
+        }
+    });
+
+    load();
+</script>
+<script src="js/sidebar.js"></script>
+</body>
+</html>

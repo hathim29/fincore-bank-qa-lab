@@ -119,3 +119,13 @@
         init();
     }
 })();
+
+// ── FinCore Assistant — load the chat widget on every page ────
+// (the widget stays hidden unless the server reports it enabled)
+(function loadAssistant() {
+    if (document.querySelector('script[src$="js/assistant.js"]')) return;
+    const s = document.createElement('script');
+    s.src = 'js/assistant.js';
+    s.defer = true;
+    document.head.appendChild(s);
+})();

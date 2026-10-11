@@ -35,6 +35,7 @@ const options = {
             { name: 'Loan Repayments', description: 'EMI payment recording' },
             { name: 'Credit Cards',    description: 'Credit card management and payments' },
             { name: 'Test Utilities',  description: 'Test data management — reset and seed' },
+            { name: 'Assistant',       description: 'FinCore Assistant (LLM chatbot) — behind a feature flag' },
         ],
         components: {
             schemas: {
@@ -545,6 +546,63 @@ const options = {
                     tags: ['Test Utilities'],
                     summary: 'Seed database without clearing existing data',
                     responses: { 200: { description: 'Seed completed' }, 403: { description: 'Not available in production' } }
+                }
+            },
+
+            // ── ASSISTANT ──────────────────────────────────────
+            '/api/assistant/status': {
+                get: {
+                    tags: ['Assistant'],
+                    summary: 'Is the assistant enabled? If not, why — plus today\'s usage and estimated cost',
+                    responses: { 200: { description: 'enabled, reason (master_switch_off | no_api_key | runtime_flag_off | daily_limit_reached), usage' } }
+                }
+            },
+            '/api/assistant/chat': {
+                post: {
+                    tags: ['Assistant'],
+                    summary: 'Send one customer message to FinCore Assistant',
+                    description: 'The assistant can only read the data of the customer the conversation is bound to. Omit conversationId to start a new conversation; reuse the returned id for follow-ups.',
+                    requestBody: {
+                        required: true,
+                        content: { 'application/json': { schema: {
+                            type: 'object',
+                            required: ['customerId', 'message'],
+                            properties: {
+                                customerId:     { type: 'integer', example: 1 },
+                                conversationId: { type: 'string' },
+                                message:        { type: 'string', example: 'What is my account balance?' },
+                            }
+                        }}}
+                    },
+                    responses: {
+                        200: { description: 'reply, conversationId and meta (toolCalls, pendingAction, latencyMs, usage)' },
+                        400: { description: 'Validation error (missing/oversized message, bad customerId)' },
+                        404: { description: 'Customer or conversation not found' },
+                        409: { description: 'Conversation belongs to a different customer' },
+                        429: { description: 'Conversation message limit reached' },
+                        502: { description: 'LLM provider error' },
+                        503: { description: 'Assistant disabled' },
+                    }
+                }
+            },
+            '/api/assistant/flags': {
+                get: {
+                    tags: ['Assistant'],
+                    summary: 'List feature flags',
+                    responses: { 200: { description: 'Array of flags' } }
+                },
+                put: {
+                    tags: ['Assistant'],
+                    summary: 'Turn the assistant on/off at runtime (admin only)',
+                    parameters: [{ name: 'x-fincore-role', in: 'header', schema: { type: 'string', example: 'admin' } }],
+                    requestBody: {
+                        required: true,
+                        content: { 'application/json': { schema: {
+                            type: 'object', required: ['enabled'],
+                            properties: { enabled: { type: 'boolean' } }
+                        }}}
+                    },
+                    responses: { 200: { description: 'Updated status' }, 400: { description: 'enabled must be boolean' }, 403: { description: 'Admin role required' } }
                 }
             }
         }

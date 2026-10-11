@@ -19,6 +19,7 @@ app.use('/api/loan-repayments',  require('./routes/loanRepayments'));
 app.use('/api/credit-cards',     require('./routes/creditCards'));
 app.use('/api/transactions',     require('./routes/transactions'));
 app.use('/api/dashboard',        require('./routes/dashboard'));
+app.use('/api/assistant',        require('./routes/assistant'));
 app.use('/api/test', testRoutes);
 
 // Health check

@@ -4,13 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "test": "playwright test",
+    "test:assistant": "playwright test tests/specs/assistant.spec.ts",
+    "eval:fixtures": "node evals/fixtures/evalCustomers.js",
+    "eval": "npx --yes promptfoo@0.124.1 eval -c evals/promptfooconfig.yaml --no-cache",
+    "eval:ci": "npx --yes promptfoo@0.124.1 eval -c evals/promptfooconfig.ci.yaml --no-cache",
+    "eval:view": "npx --yes promptfoo@0.124.1 view"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
     "@faker-js/faker": "^8.4.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
