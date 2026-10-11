@@ -2,7 +2,7 @@ name: Playwright Tests & Deploy
 
 on:
   push:
-    branches: [ main, 'feature/**' ]
+    branches: [ main, ui-updates, 'feature/**' ]
   pull_request:
     branches: [ main ]
 
