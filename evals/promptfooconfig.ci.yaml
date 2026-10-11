@@ -1,0 +1,20 @@
+# FinCore Assistant — deterministic eval subset (no LLM grader needed).
+# Used for the AI regression job in CI. Excludes policy.yaml (llm-rubric).
+
+description: FinCore Assistant — LLM evals (deterministic)
+
+prompts:
+  - "{{message}}"
+
+providers:
+  - id: file://provider.js
+    label: FinCore Assistant
+
+evaluateOptions:
+  maxConcurrency: 1
+
+tests:
+  - file://tests/accuracy.yaml
+  - file://tests/hallucination.yaml
+  - file://tests/security.yaml
+  - file://tests/workflows.yaml

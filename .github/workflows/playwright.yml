@@ -2,7 +2,7 @@ name: Playwright Tests & Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'feature/**' ]
   pull_request:
     branches: [ main ]
 
@@ -28,7 +28,13 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Create .env file
-        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
+          # FinCore Assistant: deterministic mock provider in CI (no API key, no cost).
+          # ASSISTANT_ENV=ci keeps the CI feature flag separate from the live site's.
+          echo "ASSISTANT_ENABLED=true" >> .env
+          echo "ASSISTANT_PROVIDER=mock" >> .env
+          echo "ASSISTANT_ENV=ci" >> .env
 
       - name: Seed database
         run: node db/seed.js

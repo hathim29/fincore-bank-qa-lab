@@ -1,0 +1,78 @@
+name: LLM Evals — FinCore Assistant
+
+# Runs the promptfoo eval suite against the REAL model. Manual only, because
+# every run costs a little (about 40 chats on Claude Haiku — a few cents).
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "full = all tests incl. LLM-graded policy checks; deterministic = no grader"
+        type: choice
+        options: [full, deterministic]
+        default: full
+
+jobs:
+  evals:
+    name: Run LLM evals
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create .env file
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
+          echo "ASSISTANT_ENABLED=true" >> .env
+          echo "ASSISTANT_PROVIDER=anthropic" >> .env
+          echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
+          echo "ASSISTANT_ENV=evals" >> .env
+          echo "ASSISTANT_DAILY_LIMIT=500" >> .env
+
+      - name: Start FinCore server
+        run: |
+          node server.js > server.log 2>&1 &
+          npx --yes wait-on@7.2.0 http://localhost:3000 --timeout 30000
+
+      - name: Turn the assistant on (evals environment only)
+        run: |
+          curl -sf -X PUT http://localhost:3000/api/assistant/flags \
+            -H 'content-type: application/json' -H 'x-fincore-role: admin' -H 'x-fincore-user: github-actions' \
+            -d '{"enabled":true}'
+
+      - name: Create eval customers
+        run: npm run eval:fixtures
+
+      - name: Run promptfoo
+        run: |
+          CONFIG=evals/promptfooconfig.yaml
+          if [ "${{ inputs.suite }}" = "deterministic" ]; then CONFIG=evals/promptfooconfig.ci.yaml; fi
+          npx --yes promptfoo@0.124.1 eval -c "$CONFIG" --no-cache --no-progress-bar \
+            -o evals/results/results.html -o evals/results/results.json
+        env:
+          PROMPTFOO_DISABLE_TELEMETRY: 1
+
+      - name: Turn the assistant off
+        if: always()
+        run: |
+          curl -s -X PUT http://localhost:3000/api/assistant/flags \
+            -H 'content-type: application/json' -H 'x-fincore-role: admin' -d '{"enabled":false}' || true
+
+      - name: Upload eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: llm-eval-report
+          path: |
+            evals/results/
+            server.log
+          retention-days: 30

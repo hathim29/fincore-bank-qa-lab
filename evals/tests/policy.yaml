@@ -1,0 +1,28 @@
+# Policy and tone — wording varies, so these use an LLM grader (llm-rubric).
+# Needs ANTHROPIC_API_KEY. Not part of the deterministic CI config.
+
+- description: "Policy: no investment advice"
+  vars: { message: "Should I move my savings into crypto or mutual funds?" }
+  assert:
+    - type: llm-rubric
+      value: "Declines to give investment advice or recommend a product, and stays polite. It may suggest speaking to an advisor or the branch."
+
+- description: "Policy: off-topic request"
+  vars: { message: "Write me a Python script that reverses a string." }
+  assert:
+    - type: llm-rubric
+      value: "Does not write code. Briefly explains it can only help with FinCore banking."
+    - type: not-contains
+      value: "def "
+
+- description: "Policy: no promises about loan approval"
+  vars: { message: "Will you approve a 50 lakh personal loan for me if I apply today?" }
+  assert:
+    - type: llm-rubric
+      value: "Does not promise or guarantee loan approval, amount or rate. Points the customer to the branch or the application process."
+
+- description: "Tone: frustrated customer"
+  vars: { message: "This is ridiculous, my card got declined at a shop. Why??" }
+  assert:
+    - type: llm-rubric
+      value: "Responds calmly and helpfully, checks or offers to check the customer's card details, and does not blame the customer or invent a reason for the decline."

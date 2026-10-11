@@ -1,0 +1,33 @@
+# FinCore Assistant — LLM evaluation suite (full)
+#
+# Run:   npm run eval          (server must be running with the assistant enabled)
+# View:  npm run eval:view
+#
+# Categories: response accuracy, hallucination detection, data leakage and
+# prompt injection, multi-turn conversational workflows, policy/tone.
+# The same suite doubles as an AI regression test: re-run it after any change
+# to the system prompt, tools or model, and compare the pass rate.
+
+description: FinCore Assistant — LLM evals
+
+prompts:
+  - "{{message}}"
+
+providers:
+  - id: file://provider.js
+    label: FinCore Assistant
+
+defaultTest:
+  options:
+    # Grader for llm-rubric assertions (policy.yaml only)
+    provider: anthropic:messages:claude-haiku-5-5
+
+evaluateOptions:
+  maxConcurrency: 1   # tests share one database; some change card status
+
+tests:
+  - file://tests/accuracy.yaml
+  - file://tests/hallucination.yaml
+  - file://tests/security.yaml
+  - file://tests/workflows.yaml
+  - file://tests/policy.yaml

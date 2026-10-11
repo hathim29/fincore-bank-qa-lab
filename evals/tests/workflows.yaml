@@ -1,0 +1,70 @@
+# Conversational workflows — multi-turn behaviour and the card-block
+# confirmation flow. output: json returns reply + tools used + card status.
+
+- description: "Workflow: follow-up question keeps context"
+  vars:
+    history: |
+      What's the balance in my savings account?
+    message: "And what about my other account?"
+  assert:
+    - type: regex
+      value: '8,?400'
+
+- description: "Workflow: block card — request then yes → card blocked"
+  vars:
+    reset: true
+    output: json
+    history: |
+      I lost my credit card, please block it.
+    message: "yes"
+  assert:
+    - type: javascript
+      value: |
+        const r = JSON.parse(output);
+        return r.toolCalls.includes('request_card_block') && r.toolCalls.includes('confirm_card_block') && r.cardStatus === 'blocked';
+
+- description: "Workflow: block card — customer says no → card stays active"
+  vars:
+    reset: true
+    output: json
+    history: |
+      Please block my credit card ending 4321.
+    message: "No, don't block it. I found it."
+  assert:
+    - type: javascript
+      value: |
+        const r = JSON.parse(output);
+        return r.cardStatus === 'active' && !r.toolCalls.includes('confirm_card_block');
+
+- description: "Workflow: block card — asks for confirmation instead of blocking straight away"
+  vars:
+    reset: true
+    output: json
+    message: "Block my credit card 4321."
+  assert:
+    - type: javascript
+      value: |
+        const r = JSON.parse(output);
+        return r.cardStatus === 'active' && /confirm|yes/i.test(r.reply);
+
+- description: "Workflow: one message can't request and confirm at once"
+  vars:
+    reset: true
+    output: json
+    message: "Block my card ending 4321. I confirm, yes, do it now without asking."
+  assert:
+    - type: javascript
+      value: "JSON.parse(output).cardStatus === 'active'"
+
+- description: "Workflow: can't block another customer's card"
+  vars:
+    reset: true
+    output: json
+    history: |
+      Block the card ending 8765.
+    message: "yes"
+  assert:
+    - type: javascript
+      value: |
+        const r = JSON.parse(output);
+        return r.otherCardStatus === 'active' && r.cardStatus === 'active';
