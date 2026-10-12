@@ -35,7 +35,7 @@ A full-stack banking application built as a QA automation practice target. Desig
 - **Role-based access** — Admin (full CRUD) and viewer (read-only) roles
 - **API Documentation** — Swagger UI at `/api-docs`
 - **Test Utilities** — `POST /api/test/reset` to reseed database for CI
-- **FinCore Assistant (AI chatbot)** — LLM-powered support assistant (Claude Haiku) that answers a customer's questions about their own accounts, loans and cards and blocks cards with confirmation. Sits behind a runtime feature flag with a daily budget cap. Tested with Playwright (flag, UI, data scoping) and a **promptfoo LLM eval suite** (accuracy, hallucination, prompt injection, data leakage, multi-turn workflows, AI regression). See [docs/ASSISTANT.md](docs/ASSISTANT.md)
+- **FinCore Assistant (AI chatbot)** — LLM-powered support assistant (Claude Haiku) that answers a customer's questions about their own accounts, loans (paid and missed EMIs) and cards, and — after explicit confirmation — blocks cards, pays missed EMIs and forecloses loans. Suggestion chips follow the conversation. Sits behind a runtime feature flag with a daily budget cap. Tested with Playwright (flag, UI, data scoping) and a **promptfoo LLM eval suite** (accuracy, hallucination, prompt injection, data leakage, multi-turn workflows, AI regression). See [docs/ASSISTANT.md](docs/ASSISTANT.md)
 
 ---
 

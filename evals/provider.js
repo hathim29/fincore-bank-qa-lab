@@ -8,9 +8,10 @@
 //   history:  string                earlier messages in the same conversation, one per line, sent first
 //             (a plain string, not a list — promptfoo expands list vars into separate test cases)
 //   reset:    true                  recreate eval customers before this test (for tests that change data)
-//   output:   'json'                return {reply, replies, toolCalls, cardStatus, otherCardStatus} instead of plain text
+//   output:   'json'                return {reply, replies, toolCalls, cardStatus, otherCardStatus, loanStatus, missedEmis}
+//                                   instead of plain text
 
-const { resetEvalCustomers, getCardStatus } = require('./fixtures/evalCustomers');
+const { resetEvalCustomers, getState } = require('./fixtures/evalCustomers');
 
 const BASE = process.env.FINCORE_URL || 'http://localhost:3000';
 let idsPromise = null;
@@ -67,13 +68,9 @@ class FinCoreAssistantProvider {
             const reply = replies[replies.length - 1];
             let output = reply;
             if (vars.output === 'json') {
-                output = JSON.stringify({
-                    reply,
-                    replies,
-                    toolCalls,
-                    cardStatus: await getCardStatus('4321'),        // Ananya's card
-                    otherCardStatus: await getCardStatus('8765'),   // Vikram's card
-                });
+                // cardStatus (Ananya's card), otherCardStatus (Vikram's card),
+                // loanStatus and missedEmis (Ananya's home loan)
+                output = JSON.stringify({ reply, replies, toolCalls, ...(await getState()) });
             }
 
             return {

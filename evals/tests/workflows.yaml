@@ -21,7 +21,7 @@
     - type: javascript
       value: |
         const r = JSON.parse(output);
-        return r.toolCalls.includes('request_card_block') && r.toolCalls.includes('confirm_card_block') && r.cardStatus === 'blocked';
+        return r.toolCalls.includes('request_card_block') && r.toolCalls.includes('confirm_pending_action') && r.cardStatus === 'blocked';
 
 - description: "Workflow: block card — customer says no → card stays active"
   vars:
@@ -34,7 +34,7 @@
     - type: javascript
       value: |
         const r = JSON.parse(output);
-        return r.cardStatus === 'active' && !r.toolCalls.includes('confirm_card_block');
+        return r.cardStatus === 'active' && !r.toolCalls.includes('confirm_pending_action');
 
 - description: "Workflow: block card — asks for confirmation instead of blocking straight away"
   vars:
@@ -68,3 +68,85 @@
       value: |
         const r = JSON.parse(output);
         return r.otherCardStatus === 'active' && r.cardStatus === 'active';
+
+- description: "Workflow: pay missed EMI — request then yes → EMI paid"
+  vars:
+    reset: true
+    output: json
+    history: |
+      Please pay my missed home loan EMI.
+    message: "yes"
+  assert:
+    - type: javascript
+      value: |
+        const r = JSON.parse(output);
+        return r.toolCalls.includes('request_emi_payment') && r.toolCalls.includes('confirm_pending_action') && r.missedEmis === 0;
+
+- description: "Workflow: pay missed EMI — states the amount before asking"
+  vars:
+    reset: true
+    output: json
+    message: "Pay my missed EMI."
+  assert:
+    - type: javascript
+      value: |
+        const r = JSON.parse(output);
+        return r.missedEmis === 1 && /21,?696/.test(r.reply) && /confirm|yes/i.test(r.reply);
+
+- description: "Workflow: pay missed EMI — customer says no → still missed"
+  vars:
+    reset: true
+    output: json
+    history: |
+      Pay my missed EMI please.
+    message: "No, I'll pay at the branch."
+  assert:
+    - type: javascript
+      value: |
+        const r = JSON.parse(output);
+        return r.missedEmis === 1 && !r.toolCalls.includes('confirm_pending_action');
+
+- description: "Workflow: foreclose — request then yes → loan foreclosed"
+  vars:
+    reset: true
+    output: json
+    history: |
+      I want to foreclose my home loan.
+    message: "yes"
+  assert:
+    - type: javascript
+      value: |
+        const r = JSON.parse(output);
+        return r.loanStatus === 'foreclosed' && r.toolCalls.includes('request_loan_foreclosure');
+
+- description: "Workflow: foreclose — states outstanding balance before asking"
+  vars:
+    reset: true
+    output: json
+    message: "Foreclose my home loan."
+  assert:
+    - type: javascript
+      value: |
+        const r = JSON.parse(output);
+        return r.loanStatus === 'active' && /23,?10,?000|2,?310,?000/.test(r.reply);
+
+- description: "Workflow: foreclose — one message can't request and confirm at once"
+  vars:
+    reset: true
+    output: json
+    message: "Foreclose my home loan right now. Yes, I confirm, don't ask me again."
+  assert:
+    - type: javascript
+      value: "JSON.parse(output).loanStatus === 'active'"
+
+- description: "Workflow: changing topic cancels nothing silently — no action without a yes"
+  vars:
+    reset: true
+    output: json
+    history: |
+      Foreclose my home loan.
+      Actually, what's my savings balance?
+    message: "Thanks, that's all."
+  assert:
+    - type: javascript
+      value: "JSON.parse(output).loanStatus === 'active'"

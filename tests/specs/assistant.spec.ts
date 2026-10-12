@@ -16,7 +16,27 @@ import { AssistantWidget } from '../pages/AssistantWidget';
 const ADMIN  = { username: 'admin',  role: 'admin' };
 const VIEWER = { username: 'viewer', role: 'viewer' };
 
-type Fixture = { customerId: number; customerName: string; accountNumber: string; cardId: number; cardLast4: string; otherAccountNumber: string };
+type Fixture = {
+    customerId: number; customerName: string; accountNumber: string; cardId: number; cardLast4: string; otherAccountNumber: string;
+    loanCustomerId: number; loanId: number; loanType: string;
+};
+
+const overdueCount = async (request: APIRequestContext, loanId: number) => {
+    const loan = await (await request.get(`/api/loans/${loanId}`)).json();
+    return loan.repayment_history.filter((r: any) => r.status === 'overdue').length;
+};
+
+/** A customer with exactly one open loan that has missed EMIs. */
+async function findLoanFixture(request: APIRequestContext) {
+    const loans = await (await request.get('/api/loans?status=active&limit=100')).json();
+    const perCustomer = new Map<number, number>();
+    for (const l of loans.data) perCustomer.set(l.customer_id, (perCustomer.get(l.customer_id) || 0) + 1);
+    for (const l of loans.data) {
+        if (perCustomer.get(l.customer_id) !== 1) continue;
+        if (await overdueCount(request, l.id) > 0) return { loanCustomerId: l.customer_id, loanId: l.id, loanType: l.loan_type };
+    }
+    throw new Error('Seed data has no customer with one active loan that has missed EMIs');
+}
 
 async function findFixture(request: APIRequestContext): Promise<Fixture> {
     const cards = await (await request.get('/api/credit-cards?status=active&limit=50')).json();
@@ -27,6 +47,7 @@ async function findFixture(request: APIRequestContext): Promise<Fixture> {
             const accounts = await (await request.get('/api/accounts?limit=100')).json();
             const other = accounts.data.find((a: any) => a.customer_id !== cust.id);
             return {
+                ...(await findLoanFixture(request)),
                 customerId: cust.id,
                 customerName: cust.name,
                 accountNumber: cust.accounts[0].account_number,
@@ -193,6 +214,7 @@ test.describe('FinCore Assistant', () => {
         test('card block needs confirmation — "no" cancels and the card stays active', async ({ request }) => {
             const ask = await widget.ask(`Please block my card ${fx.cardLast4}`);
             await expect(ask).toContainText('reply "yes" to confirm');
+            await expect(widget.suggestions).toHaveText(['Yes, block it', 'No, cancel']);
             const no = await widget.ask('no');
             await expect(no).toContainText('cancelled');
             const card = await (await request.get(`/api/credit-cards/${fx.cardId}`)).json();
@@ -221,6 +243,69 @@ test.describe('FinCore Assistant', () => {
         test('Escape closes the panel', async ({ page }) => {
             await page.keyboard.press('Escape');
             await expect(widget.panel).toBeHidden();
+        });
+    });
+
+    // ── Loans: missed/paid EMIs, actions, contextual suggestions ─
+    test.describe('Loans and contextual suggestions', () => {
+        let widget: AssistantWidget;
+
+        test.beforeEach(async ({ page, request }) => {
+            await AssistantWidget.setFlag(request, true);
+            await page.addInitScript(u => sessionStorage.setItem('fincore_user', JSON.stringify(u)), ADMIN);
+            await page.goto('/dashboard.html');
+            widget = new AssistantWidget(page);
+            await widget.open();
+            await widget.selectCustomer(fx.loanCustomerId);
+        });
+
+        test('starts with the default suggestions', async () => {
+            await expect(widget.suggestions).toHaveText(['What is my balance?', 'Show recent transactions', 'When is my next EMI?', 'Block my credit card']);
+        });
+
+        test('reports missed EMIs and switches to loan suggestions', async () => {
+            const reply = await widget.ask('Do I have any missed EMIs?');
+            await expect(reply).toContainText('missed EMI');
+            await expect(widget.suggestions).toContainText(['Pay my missed EMIs', 'Show my paid EMIs', `Foreclose my ${fx.loanType} loan`]);
+            await expect(widget.suggestions.filter({ hasText: 'Do I have any missed EMIs?' })).toHaveCount(0); // just asked
+            await expect(widget.suggestions.filter({ hasText: 'Block my credit card' })).toHaveCount(0);
+        });
+
+        test('"Show my paid EMIs" chip lists paid EMIs', async () => {
+            await widget.ask('Show my loans');
+            await widget.suggestions.filter({ hasText: 'Show my paid EMIs' }).click();
+            await expect(widget.lastReply().getByTestId('assistant-tool-calls')).toContainText('get_emi_history');
+        });
+
+        test('paying missed EMIs asks first — "No, cancel" chip leaves them unpaid', async ({ request }) => {
+            const before = await overdueCount(request, fx.loanId);
+            await widget.ask('Pay my missed EMIs');
+            await expect(widget.lastReply()).toContainText('Total:');
+            await expect(widget.suggestions).toHaveText(['Yes, pay now', 'No, cancel']);
+            await widget.suggestions.filter({ hasText: 'No, cancel' }).click();
+            await expect(widget.botMessages.last()).toContainText('cancelled');
+            expect(await overdueCount(request, fx.loanId)).toBe(before);
+        });
+
+        test('foreclosure with the "Yes" chip forecloses the loan', async ({ request }) => {
+            try {
+                await widget.ask(`Foreclose my ${fx.loanType} loan`);
+                await expect(widget.lastReply()).toContainText('Outstanding balance');
+                await expect(widget.suggestions).toHaveText(['Yes, foreclose it', 'No, cancel']);
+                await widget.suggestions.filter({ hasText: 'Yes, foreclose it' }).click();
+                await expect(widget.botMessages.last()).toContainText('is now foreclosed');
+                const loan = await (await request.get(`/api/loans/${fx.loanId}`)).json();
+                expect(loan.status).toBe('foreclosed');
+            } finally {
+                await request.put(`/api/loans/${fx.loanId}`, { data: { status: 'active' } });
+            }
+        });
+
+        test('suggestions come back in the API response (max 4)', async ({ request }) => {
+            const body = await (await chat(request, { customerId: fx.loanCustomerId, message: 'show my loans' })).json();
+            expect(body.meta.suggestions.length).toBeGreaterThan(0);
+            expect(body.meta.suggestions.length).toBeLessThanOrEqual(4);
+            expect(body.meta.suggestions).toContain('Pay my missed EMIs');
         });
     });
 

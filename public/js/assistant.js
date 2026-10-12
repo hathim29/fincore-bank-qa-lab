@@ -101,15 +101,6 @@
             suggestions: panel.querySelector('.fa-suggestions'),
         };
 
-        SUGGESTIONS.forEach(s => {
-            const b = document.createElement('button');
-            b.className = 'fa-chip';
-            b.textContent = s;
-            b.setAttribute('data-testid', 'assistant-suggestion');
-            b.addEventListener('click', () => send(s));
-            els.suggestions.appendChild(b);
-        });
-
         launcher.addEventListener('click', () => toggle());
         panel.querySelector('[data-testid="assistant-close"]').addEventListener('click', () => toggle(false));
         panel.querySelector('[data-testid="assistant-new-chat"]').addEventListener('click', () => reset());
@@ -134,6 +125,21 @@
         }
     }
 
+    // Suggestion chips: defaults at the start, then whatever the server suggests
+    // after each reply (they follow the conversation — loans, cards, yes/no…).
+    function renderSuggestions(list) {
+        els.suggestions.innerHTML = '';
+        (list && list.length ? list : SUGGESTIONS).forEach(text => {
+            const b = document.createElement('button');
+            b.className = 'fa-chip';
+            b.textContent = text;
+            b.setAttribute('data-testid', 'assistant-suggestion');
+            b.addEventListener('click', () => send(text));
+            els.suggestions.appendChild(b);
+        });
+        els.suggestions.hidden = false;
+    }
+
     function toggle(force) {
         state.open = typeof force === 'boolean' ? force : !state.open;
         els.panel.hidden = !state.open;
@@ -146,7 +152,7 @@
         els.messages.innerHTML = '';
         const name = els.select.selectedOptions[0] ? els.select.selectedOptions[0].textContent.replace(/\s*\(#\d+\)$/, '') : 'there';
         addMessage('bot', `Hi ${name}! I can help with your balances, recent transactions, loans and EMIs, and credit cards.`);
-        els.suggestions.hidden = false;
+        renderSuggestions(SUGGESTIONS);
     }
 
     function addMessage(kind, text, toolCalls) {
@@ -192,6 +198,7 @@
             if (res.ok) {
                 state.conversationId = body.conversationId;
                 addMessage('bot', body.reply, body.meta && body.meta.toolCalls);
+                renderSuggestions(body.meta && body.meta.suggestions);
             } else if (res.status === 503) {
                 addMessage('error', 'The assistant has been turned off. Please try again later.');
                 setTimeout(() => refreshVisibility(), 1500);
@@ -204,6 +211,7 @@
         } catch {
             addMessage('error', 'Cannot reach the server. Please check your connection.');
         } finally {
+            if (els.suggestions.hidden) renderSuggestions(SUGGESTIONS); // after an error, offer the defaults again
             typing.remove();
             state.busy = false;
             els.send.disabled = false;

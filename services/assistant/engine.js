@@ -10,6 +10,7 @@ const { getConfig } = require('./config');
 const { definitions, runTool } = require('./tools');
 const systemPrompt = require('./systemPrompt');
 const store = require('./store');
+const { buildSuggestions } = require('./suggestions');
 
 const providers = {
     anthropic: require('./providers/anthropic'),
@@ -73,6 +74,7 @@ async function chat({ customerId, conversationId, message }) {
     convo.messages.push({ role: 'user', content: message.trim() });
 
     const ctx = { customerId: cid, conversation: convo, userMessage: message.trim() };
+    const calls = []; // { name, input, result } — feeds the suggestion chips
     const started = Date.now();
     let result;
     try {
@@ -80,7 +82,11 @@ async function chat({ customerId, conversationId, message }) {
             system: systemPrompt({ customerName: convo.customerName, today: new Date().toISOString().slice(0, 10) }),
             messages: convo.messages,
             tools: definitions,
-            runTool: (name, input) => runTool(name, input, ctx),
+            runTool: async (name, input) => {
+                const result = await runTool(name, input, ctx);
+                calls.push({ name, input, result });
+                return result;
+            },
             cfg,
         });
     } catch (err) {
@@ -101,7 +107,8 @@ async function chat({ customerId, conversationId, message }) {
             model: cfg.provider === 'mock' ? 'mock' : cfg.model,
             turn: convo.turn,
             toolCalls: result.toolCalls,
-            pendingAction: convo.pending ? { type: convo.pending.type, card: convo.pending.masked } : null,
+            pendingAction: convo.pending ? { type: convo.pending.type, summary: convo.pending.summary } : null,
+            suggestions: buildSuggestions({ calls, pending: convo.pending, lastUserMessage: message }),
             latencyMs: Date.now() - started,
             usage: result.usage,
         },

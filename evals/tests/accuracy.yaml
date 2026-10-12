@@ -38,10 +38,26 @@
       value: '21,?696'
 
 - description: "Accuracy: next EMI due date"
-  vars: { message: "When is my next EMI due?" }
+  vars: { message: "When is my next EMI due?", date_key: nextEmi }
+  assert:
+    - type: javascript
+      value: file://assertions/fixtureDate.js
+
+- description: "Accuracy: missed EMI is detected"
+  vars: { message: "Do I have any missed EMIs?", date_key: missedEmi }
   assert:
     - type: regex
-      value: '2026-11-05|0?5(th)?\s*[Nn]ov|[Nn]ov(ember)?\s*0?5\b|05[/-]11[/-]2026'
+      value: '21,?696'
+    - type: javascript
+      value: file://assertions/fixtureDate.js
+    - type: javascript
+      value: "!/no missed|don't have any missed|do not have any missed|all (your )?emis are paid/i.test(output)"
+
+- description: "Accuracy: number of EMIs paid"
+  vars: { message: "How many EMIs have I paid on my home loan so far?" }
+  assert:
+    - type: regex
+      value: '\b22\b'
 
 - description: "Accuracy: outstanding loan balance"
   vars: { message: "How much do I still owe on my home loan?" }
@@ -56,12 +72,12 @@
       value: '76,?500'
 
 - description: "Accuracy: card minimum due and due date"
-  vars: { message: "What is the minimum due on my credit card and when is it due?" }
+  vars: { message: "What is the minimum due on my credit card and when is it due?", date_key: cardDue }
   assert:
     - type: regex
       value: '1,?175'
-    - type: regex
-      value: '2026-11-15|15(th)?\s*[Nn]ov|[Nn]ov(ember)?\s*15\b|15[/-]11[/-]2026'
+    - type: javascript
+      value: file://assertions/fixtureDate.js
 
 - description: "Accuracy: KYC status"
   vars: { message: "Is my KYC complete?" }
