@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FinCore · Live Test Dashboard</title>
+<link rel="stylesheet" href="dashboard.css">
+</head>
+<body data-page="index">
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <div class="mark">F</div>
+      <div><h1>FinCore Bank · Test Execution</h1><div class="sub">Playwright · TypeScript · Page Object Model</div></div>
+    </div>
+    <div class="meta">
+      <span class="chip">Elapsed <b id="elapsed">00:00</b></span>
+      <span class="chip">ETA <b id="eta">—</b></span>
+      <span class="chip">Workers <b id="workers">1</b> · Retries <b id="retries">0</b></span>
+      <span class="pill running" id="status"><span class="dot"></span><span id="statusText">Connecting</span></span>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="card ringbox">
+      <svg class="ring" viewBox="0 0 230 230" id="ring"><circle class="bg" cx="115" cy="115" r="100"/></svg>
+      <div class="ringlabel"><div><div class="pct" id="pct">0%</div><div class="of" id="of">0 / 0 tests</div></div></div>
+    </div>
+    <div class="right">
+      <div class="kpis">
+        <div class="kpi" style="--c:var(--teal)"><div class="n" id="k-total">0</div><div class="l">Total</div></div>
+        <div class="kpi" style="--c:var(--pass)"><div class="n" id="k-passed">0</div><div class="l">Passed</div></div>
+        <div class="kpi" style="--c:var(--fail)"><div class="n" id="k-failed">0</div><div class="l">Failed</div></div>
+        <div class="kpi" style="--c:var(--flaky)"><div class="n" id="k-flaky">0</div><div class="l">Flaky</div></div>
+        <div class="kpi" style="--c:var(--known)"><div class="n" id="k-known">0</div><div class="l">Known bugs</div></div>
+        <div class="kpi" style="--c:var(--run)"><div class="n" id="k-rate">—</div><div class="l">Pass rate</div></div>
+      </div>
+      <div class="card barwrap">
+        <div class="barhead"><span>Execution progress</span><span id="remaining"></span></div>
+        <div class="bar" id="bar"></div>
+        <div class="legend">
+          <span><i style="background:var(--pass)"></i>Passed</span>
+          <span><i style="background:var(--flaky)"></i>Flaky</span>
+          <span><i style="background:var(--known)"></i>Known bug</span>
+          <span><i style="background:var(--fail)"></i>Likely app bug</span>
+          <span><i style="background:var(--env)"></i>Likely test / env issue</span>
+          <span><i style="background:var(--triage)"></i>Needs triage</span>
+          <span><i style="background:var(--skip)"></i>Skipped</span>
+        </div>
+      </div>
+      <div class="now idle" id="now"><div class="spin" id="spin" style="display:none"></div><div style="min-width:0"><div class="t" id="nowT">Waiting for tests to start…</div><div class="s" id="nowS"></div></div></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Spec files <span id="specCount"></span></h2>
+      <table class="specs" id="specs"></table>
+    </div>
+    <div class="card">
+      <h2>Failures &amp; triage <span style="text-transform:none;letter-spacing:0;font-weight:500">click a test for details ↗</span></h2>
+      <div class="triage-chips" id="chips"></div>
+      <div class="fails" id="fails"></div>
+    </div>
+  </div>
+
+  <div class="card feed">
+    <h2>Live feed <span id="feedInfo"></span></h2>
+    <ul id="feed"></ul>
+  </div>
+
+  <div class="foot">
+    <span>Failure types: <b>Flaky</b> and <b>Known bug</b> are exact. <b>Likely app bug</b>, <b>Likely test / env issue</b> and <b>Needs triage</b> are automatic first-pass guesses — a QA engineer confirms.</span>
+    <span id="mode"></span>
+  </div>
+</div>
+<script src="state.js" onerror="void 0"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

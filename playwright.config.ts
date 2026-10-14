@@ -8,17 +8,16 @@ export default defineConfig({
     use: {
         baseURL: 'http://localhost:3000',
 
-        // Collect trace on first retry — useful for debugging CI failures
-        trace: 'on-first-retry',
-
-        // Screenshot on failure
+        // Keep trace, screenshot and video for every failed attempt —
+        // the live dashboard (npm run test:dashboard) shows them per failure
+        trace: 'retain-on-failure',
         screenshot: 'only-on-failure',
-
-        // Video on first retry
-        video: 'on-first-retry',
+        video: 'retain-on-failure',
     },
 
     // ── Reporters ──────────────────────────────────────────────
+    // Live dashboard: npm run test:dashboard
+    // (adds ./tests/reporters/live-dashboard/reporter.ts from the command line)
     reporter: [
         ['html', { outputFolder: 'playwright-report', open: 'never' }],
         ['list'],

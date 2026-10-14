@@ -126,7 +126,40 @@ npx playwright test --headed
 
 # View HTML report
 npx playwright show-report
+
+# Run with the live test dashboard (opens http://localhost:9400)
+npm run test:dashboard
 ```
+
+### Live Test Dashboard
+
+A custom Playwright reporter (`tests/reporters/live-dashboard/`) streams the run to a live browser dashboard. It has no extra dependencies and works offline.
+
+- **Live progress:** progress ring and bar, elapsed time and ETA, the test running right now, per-spec progress, and a live feed of results
+- **Failure triage:** every failure is classified after retries:
+
+| Type | How it's decided |
+|---|---|
+| **Flaky** | Failed, then passed on retry (reported by Playwright) |
+| **Known bug** | Test is tagged with a `known-bug` annotation and declared with `test.fail()` |
+| **Likely app bug** | An `expect()` assertion failed |
+| **Likely test / env issue** | Timeout, locator, overlay or network problem with no failed assertion |
+| **Needs triage** | Anything else |
+
+  *Flaky* and *Known bug* are exact. The other three are first-pass guesses for a QA engineer to confirm.
+- **Failure details:** clicking a failed test opens a window with the error and code snippet, the steps (the failed step highlighted), the screenshot, the video and the trace for every attempt
+- **Shareable report:** a static copy is saved to `live-dashboard-report/index.html` at the end of the run
+
+Options: `LIVE_DASHBOARD_PORT` (default 9400), `LIVE_DASHBOARD_OPEN=0` (don't open the browser), `LIVE_DASHBOARD_EXIT=1` (don't keep serving after the run). On CI it never opens a browser or blocks.
+
+### Known bugs as tests
+
+`tests/specs/known-bugs.spec.ts` holds regression tests for open defects. Each asserts the *correct* behaviour and is declared with `test.fail()`, so CI stays green while the bug is open. When the bug is fixed, the test passes, Playwright flags it, and `test.fail()` should be removed.
+
+| Tag | Defect |
+|---|---|
+| Known Bug 1 | EMI due dates returned as UTC timestamps, shifting by one day in non-UTC time zones |
+| Known Bug 2 | EMI schedule mixes two date sources: duplicate or out-of-order due dates and an inflated overdue count |
 
 ---
 
@@ -135,15 +168,16 @@ npx playwright show-report
 | Module | Spec File | Tests | Status |
 |---|---|---|---|
 | Login | login.spec.ts | 13 | ✅ Passing |
-| Dashboard | dashboard.spec.ts | 21 | ✅ Passing |
+| Dashboard | dashboard.spec.ts | 22 | ✅ Passing |
 | Customers | customers.spec.ts | 20 | ✅ Passing |
 | Accounts | accounts.spec.ts | 23 | ✅ Passing |
 | Transactions | transactions.spec.ts | 21 | ✅ Passing |
 | Loans | loans.spec.ts | 23 | ✅ Passing |
 | Credit Cards | credit-cards.spec.ts | 27 | ✅ Passing |
 | Security | security.spec.ts | 9 | ✅ Passing |
-| Onboarding | onboarding.spec.ts | 14 | ✅ Passing |
-| **Total** | | **171** | **✅ All Passing** |
+| Onboarding | onboarding.spec.ts | 13 | ✅ Passing |
+| Known Bugs | known-bugs.spec.ts | 2 | 🐞 Expected to fail (open defects) |
+| **Total** | | **173** | |
 
 Full Page Object Model (POM) architecture — every page has a dedicated Page Object class. Tests use `data-testid` selectors throughout.
 
