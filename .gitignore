@@ -4,6 +4,7 @@ node_modules/
 /test-results/
 /playwright-report/
 /live-dashboard-report/
+/live-dashboard-history/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/

@@ -127,16 +127,44 @@ npx playwright test --headed
 # View HTML report
 npx playwright show-report
 
-# Run with the live test dashboard (opens http://localhost:9400)
-npm run test:dashboard
+# Live test dashboard: opens http://localhost:9400 and starts a full run
+npm run dashboard
 ```
 
 ### Live Test Dashboard
 
-A custom Playwright reporter (`tests/reporters/live-dashboard/`) streams the run to a live browser dashboard. It has no extra dependencies and works offline.
+A custom Playwright reporter plus a small local server (`tests/reporters/live-dashboard/`). It has no extra dependencies and works offline.
 
-- **Live progress:** progress ring and bar, elapsed time and ETA, the test running right now, per-spec progress, and a live feed of results
-- **Failure triage:** every failure is classified after retries:
+```bash
+npm run dashboard                 # open the dashboard and start a full run
+npm run dashboard -- --no-run     # open it without starting a run (e.g. to review history)
+npm run test:dashboard            # one-off run that hosts its own dashboard
+npm run test:dashboard -- tests/specs/login.spec.ts    # one-off run of a single spec
+```
+
+**Watch a run live**
+- Progress ring and bar, elapsed time and ETA, and the test running right now
+- Per-spec progress and a live feed of results
+
+**Drill into anything**
+- Click a **spec** to see all its tests, grouped by `describe` or sorted slowest first
+- Click any **test**, passed or failed, to open its detail window:
+  - every attempt, with the error and code snippet
+  - the steps, with the failed step highlighted
+  - the screenshot, video and trace (these are kept for failed attempts only)
+
+**Run history**
+- The last 20 runs are saved to `live-dashboard-history/` (git-ignored)
+- Every test shows a pass/fail strip, and its detail window shows a duration trend plus stats: passed / failed / flaky counts, average time, and the latest run compared with the average
+- A **Recent runs** list sits on the main page
+
+**Run controls** (`npm run dashboard` only)
+- **▶ Run…** picks what to run: all tests, failed & flaky from the last run, one spec, or one test (searchable)
+- It can also choose browsers (Chromium · Firefox · WebKit) and headed mode. Firefox and WebKit need a one-time `npx playwright install firefox webkit`. Picking several browsers shows a run-time warning, because each browser runs one after another.
+- **↻ Re-run failed** is a one-click re-run of the last run's failures. **■ Stop** ends a run in progress.
+- Runs always use 1 worker: the tests share one database, so running them in parallel would make them interfere with each other.
+
+**Failure triage:** every failure is classified after retries:
 
 | Type | How it's decided |
 |---|---|
@@ -146,11 +174,13 @@ A custom Playwright reporter (`tests/reporters/live-dashboard/`) streams the run
 | **Likely test / env issue** | Timeout, locator, overlay or network problem with no failed assertion |
 | **Needs triage** | Anything else |
 
-  *Flaky* and *Known bug* are exact. The other three are first-pass guesses for a QA engineer to confirm.
-- **Failure details:** clicking a failed test opens a window with the error and code snippet, the steps (the failed step highlighted), the screenshot, the video and the trace for every attempt
-- **Shareable report:** a static copy is saved to `live-dashboard-report/index.html` at the end of the run
+*Flaky* and *Known bug* are exact. The other three are first-pass guesses for a QA engineer to confirm.
 
-Options: `LIVE_DASHBOARD_PORT` (default 9400), `LIVE_DASHBOARD_OPEN=0` (don't open the browser), `LIVE_DASHBOARD_EXIT=1` (don't keep serving after the run). On CI it never opens a browser or blocks.
+**Shareable report:** a static copy of every run, history included, is saved to `live-dashboard-report/index.html`.
+
+> **Windows / PowerShell:** to pass the reporter on the command line yourself, quote it: `--reporter="list,./tests/reporters/live-dashboard/reporter.ts"`. The npm scripts above avoid this.
+
+Options: `LIVE_DASHBOARD_PORT` (default 9400), `LIVE_DASHBOARD_OPEN=0` (don't open the browser), `LIVE_DASHBOARD_EXIT=1` (`test:dashboard` only: don't keep serving after the run). On CI it never opens a browser or blocks, and CI stays Chromium-only.
 
 ### Known bugs as tests
 

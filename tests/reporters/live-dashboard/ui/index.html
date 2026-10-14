@@ -14,6 +14,7 @@
       <div><h1>FinCore Bank · Test Execution</h1><div class="sub">Playwright · TypeScript · Page Object Model</div></div>
     </div>
     <div class="meta">
+      <span id="controls" class="controls"></span>
       <span class="chip">Elapsed <b id="elapsed">00:00</b></span>
       <span class="chip">ETA <b id="eta">—</b></span>
       <span class="chip">Workers <b id="workers">1</b> · Retries <b id="retries">0</b></span>
@@ -21,6 +22,12 @@
     </div>
   </div>
 
+  <div class="card emptybox" id="empty" style="display:none">
+    <div class="big">No run yet</div>
+    <div class="muted">Click <b>▶ Run…</b> to start one. Results, failures and history will appear here.</div>
+  </div>
+
+  <div id="main">
   <div class="hero">
     <div class="card ringbox">
       <svg class="ring" viewBox="0 0 230 230" id="ring"><circle class="bg" cx="115" cy="115" r="100"/></svg>
@@ -36,7 +43,7 @@
         <div class="kpi" style="--c:var(--run)"><div class="n" id="k-rate">—</div><div class="l">Pass rate</div></div>
       </div>
       <div class="card barwrap">
-        <div class="barhead"><span>Execution progress</span><span id="remaining"></span></div>
+        <div class="barhead"><span>Execution progress <span class="runlabel" id="runLabel"></span></span><span id="remaining"></span></div>
         <div class="bar" id="bar"></div>
         <div class="legend">
           <span><i style="background:var(--pass)"></i>Passed</span>
@@ -68,12 +75,36 @@
     <h2>Live feed <span id="feedInfo"></span></h2>
     <ul id="feed"></ul>
   </div>
+  </div>
+
+  <div class="card runs" id="runsCard" style="display:none">
+    <h2>Recent runs <span id="runsInfo"></span></h2>
+    <div id="runs"></div>
+  </div>
 
   <div class="foot">
     <span>Failure types: <b>Flaky</b> and <b>Known bug</b> are exact. <b>Likely app bug</b>, <b>Likely test / env issue</b> and <b>Needs triage</b> are automatic first-pass guesses — a QA engineer confirms.</span>
     <span id="mode"></span>
   </div>
 </div>
+<div class="drawer" id="drawer">
+  <div class="dhd">
+    <div><div class="crumb">Spec file</div><h1 id="dTitle"></h1><div class="muted" id="dSub"></div></div>
+    <button class="btn ghost" id="dClose">✕</button>
+  </div>
+  <div class="dbar"><span id="dActions"></span><span class="dsort" id="dSort">Sort: <span data-s="order">file order</span><span data-s="slowest">slowest first</span></span></div>
+  <div class="dlist" id="dList"></div>
+</div>
+
+<div class="modal" id="runModal">
+  <div class="mcard">
+    <div class="mhd"><h1>Start a test run</h1></div>
+    <div id="runBody"></div>
+    <div class="mft"><button class="btn ghost" id="runCancel">Cancel</button><button class="btn" id="runStart">▶ Start run</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
 <script src="state.js" onerror="void 0"></script>
 <script src="dashboard.js"></script>
 </body>

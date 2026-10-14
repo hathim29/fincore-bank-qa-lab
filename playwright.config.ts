@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const extraBrowsers = (process.env.FINCORE_BROWSERS || '').split(',');
+
 export default defineConfig({
     // ── Test directory ─────────────────────────────────────────
     testDir: './tests/specs',
@@ -49,19 +51,18 @@ export default defineConfig({
             dependencies: ['setup'],
         },
 
-        // Firefox — secondary (run locally only)
-        // {
-        //     name: 'firefox',
-        //     use: { ...devices['Desktop Firefox'] },
-        //     dependencies: ['setup'],
-        // },
-
-        // WebKit — secondary (run locally only)
-        // {
-        //     name: 'webkit',
-        //     use: { ...devices['Desktop Safari'] },
-        //     dependencies: ['setup'],
-        // },
+        // Firefox / WebKit — added only when requested, e.g. from the dashboard's
+        // Run panel (FINCORE_BROWSERS=firefox,webkit). CI and plain runs stay Chromium-only.
+        ...(extraBrowsers.includes('firefox') ? [{
+            name: 'firefox',
+            use: { ...devices['Desktop Firefox'] },
+            dependencies: ['setup'],
+        }] : []),
+        ...(extraBrowsers.includes('webkit') ? [{
+            name: 'webkit',
+            use: { ...devices['Desktop Safari'] },
+            dependencies: ['setup'],
+        }] : []),
     ],
 
     // ── Web server — auto-starts server before tests ───────────

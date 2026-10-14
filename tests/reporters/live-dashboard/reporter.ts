@@ -5,14 +5,17 @@
  * browser dashboard (progress, pass/fail counts, per-spec status) and
  * classifies every failure so it can be triaged at a glance.
  *
- * Usage:   npm run test:dashboard
- *          (= playwright test --reporter=list,./tests/reporters/live-dashboard/reporter.ts)
+ * Two modes:
+ *   npm run dashboard        permanent dashboard (server.js) that starts / re-runs / stops runs;
+ *                            each run's reporter streams to it (LIVE_DASHBOARD_SERVER is set)
+ *   npm run test:dashboard   one run; the reporter hosts the dashboard itself
  *
- * While the run is going:   http://localhost:9400  (opens automatically)
- * After the run:            live-dashboard-report/index.html  (static copy, shareable)
+ * Every run also writes:
+ *   live-dashboard-report/index.html   static, shareable copy of the final dashboard
+ *   live-dashboard-history/*.json      one summary per run (last 20) for the run-history views
  *
- * Env options:
- *   LIVE_DASHBOARD_PORT=9400     change the port
+ * Env options (test:dashboard mode):
+ *   LIVE_DASHBOARD_PORT=9400     port (tries the next few if busy)
  *   LIVE_DASHBOARD_OPEN=0        don't auto-open the browser
  *   LIVE_DASHBOARD_EXIT=1        don't keep the server running after the run
  *   CI=true                      implies OPEN=0 and EXIT=1
@@ -33,6 +36,8 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const dashboardServer = require('./server.js');
 
 type Category = 'passed' | 'flaky' | 'known-bug' | 'likely-app-bug' | 'likely-test-env' | 'needs-triage' | 'skipped';
 
@@ -51,6 +56,7 @@ interface TestState {
     id: string;
     title: string;
     fullTitle: string;
+    project: string;
     spec: string;
     file: string;
     line: number;
@@ -79,8 +85,10 @@ class LiveDashboardReporter implements Reporter {
     private artifactDirs: string[] = [];
     private uiDir = __dirname;
     private outDir = path.join(process.cwd(), 'live-dashboard-report');
-    private server?: http.Server;
-    private clients = new Set<http.ServerResponse>();
+    private serverUrl = process.env.LIVE_DASHBOARD_SERVER || '';      // set when launched by `npm run dashboard`
+    private runOptions = safeJson(process.env.LIVE_DASHBOARD_RUN_OPTS);
+    private dash: any = null;                                         // in-process dashboard (test:dashboard mode)
+    private queue: Promise<void> = Promise.resolve();
 
     private tests = new Map<string, TestState>();
     private order: string[] = [];
@@ -106,13 +114,14 @@ class LiveDashboardReporter implements Reporter {
         this.run.retries = config.projects.reduce((m, p) => Math.max(m, p.retries), 0);
         for (const test of suite.allTests()) {
             const file = path.relative(this.rootDir, test.location.file).replace(/\\/g, '/');
-            const titlePath = test.titlePath().filter(Boolean);       // ['', project, file, describe..., title]
-            const describe = titlePath.slice(3, -1).join(' › ');
+            const titlePath = test.titlePath().filter(Boolean);       // [project, file, describe..., title]
+            const describe = titlePath.slice(2, -1).join(' › ');
             const kb = test.annotations.find(a => a.type === 'known-bug');
             const st: TestState = {
                 id: test.id,
                 title: test.title,
                 fullTitle: titlePath.slice(2).join(' › '),
+                project: titlePath[0] || '',
                 spec: path.basename(file).replace(/\.spec\.ts$/, ''),
                 file,
                 line: test.location.line,
@@ -127,7 +136,7 @@ class LiveDashboardReporter implements Reporter {
             this.order.push(test.id);
         }
         this.run.total = this.order.length;
-        this.startServer();
+        if (!this.serverUrl) this.startServer();
         this.broadcast('snapshot', this.snapshot());
     }
 
@@ -171,20 +180,24 @@ class LiveDashboardReporter implements Reporter {
         this.run.status = result.status === 'interrupted' ? 'interrupted'
             : result.status === 'timedout' ? 'timedout'
             : hardFail ? 'failed' : 'passed';
-        this.broadcast('end', this.snapshot());
+        try { dashboardServer.writeHistory(this.rootDir, this.snapshot(), this.runOptions); }
+        catch (e) { process.stdout.write(`⚠️  Could not save run history: ${(e as Error).message}\n`); }
         this.writeStaticReport();
+        this.broadcast('end', this.snapshot());
+        await this.queue;
         const rel = path.relative(process.cwd(), path.join(this.outDir, 'index.html'));
         process.stdout.write(`\n📊 Live dashboard report saved: ${rel}\n`);
     }
 
     async onExit() {
-        if (!this.server) return;
+        await this.queue;
+        if (!this.dash) return;
         if (this.keepOpen) {
-            process.stdout.write(`📡 Dashboard still running at http://localhost:${this.port}  —  press Ctrl+C to quit.\n`);
+            process.stdout.write(`📡 Dashboard still running at http://localhost:${this.dash.port}  —  press Ctrl+C to quit.\n`);
+            process.stdout.write(`   Tip: \`npm run dashboard\` keeps a dashboard open and lets you re-run tests from the browser.\n`);
             await new Promise<void>(() => { /* keep serving until Ctrl+C */ });
         }
-        for (const c of this.clients) c.end();
-        await new Promise<void>(r => this.server!.close(() => r()));
+        await this.dash.close();
     }
 
     printsToStdio() { return false; }
@@ -263,53 +276,25 @@ class LiveDashboardReporter implements Reporter {
     }
 
     private broadcast(event: string, data: unknown) {
-        const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-        for (const c of this.clients) c.write(payload);
+        if (this.dash) { this.dash.ingest(event, JSON.parse(JSON.stringify(data))); return; }
+        if (!this.serverUrl) return;
+        const body = JSON.stringify({ event, data });
+        this.queue = this.queue.then(() => postJson(this.serverUrl + '/ingest', body)).catch(() => { /* dashboard closed — keep testing */ });
     }
 
-    // ── HTTP server (dashboard + live events + artifacts) ──────
+    // ── In-process dashboard (npm run test:dashboard) ──────────
 
     private startServer() {
-        this.server = http.createServer((req, res) => {
-            const url = new URL(req.url || '/', 'http://localhost');
-            if (url.pathname === '/events') {
-                res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
-                res.write(`event: snapshot\ndata: ${JSON.stringify(this.snapshot())}\n\n`);
-                this.clients.add(res);
-                req.on('close', () => this.clients.delete(res));
-                return;
-            }
-            if (url.pathname === '/state.js') return this.send(res, 200, 'text/javascript', 'window.__STATIC_STATE__ = null;');
-            if (url.pathname === '/state') return this.send(res, 200, 'application/json', JSON.stringify(this.snapshot()));
-            if (url.pathname === '/artifact') {
-                const rel = url.searchParams.get('f') || '';
-                const abs = path.resolve(this.rootDir, rel);
-                const allowed = this.artifactDirs.some(d => abs.startsWith(d + path.sep));
-                if (!allowed || !fs.existsSync(abs)) return this.send(res, 404, 'text/plain', 'Not found');
-                const download = /\.zip$/.test(abs) ? { 'Content-Disposition': `attachment; filename="${path.basename(abs)}"` } : {};
-                res.writeHead(200, { 'Content-Type': mime(abs), ...download });
-                fs.createReadStream(abs).pipe(res);
-                return;
-            }
-            const page = url.pathname === '/' ? 'index.html' : url.pathname.replace(/^\//, '');
-            if (['index.html', 'detail.html', 'dashboard.css', 'dashboard.js'].includes(page))
-                return this.send(res, 200, mime(page), fs.readFileSync(path.join(this.uiDir, 'ui', page)));
-            this.send(res, 404, 'text/plain', 'Not found');
-        });
-        this.server.on('error', (e: NodeJS.ErrnoException) => {
-            process.stdout.write(`⚠️  Live dashboard could not start on port ${this.port} (${e.code}). Tests will still run.\n`);
-            this.server = undefined;
-        });
-        this.server.listen(this.port, () => {
-            const url = `http://localhost:${this.port}`;
-            process.stdout.write(`\n📊 Live test dashboard: ${url}\n\n`);
+        const dash = dashboardServer.createDashboard({ root: this.rootDir, port: this.port });
+        dash.listen(10).then((port: number) => {
+            this.dash = dash;
+            this.dash.ingest('snapshot', JSON.parse(JSON.stringify(this.snapshot())));
+            const url = `http://localhost:${port}`;
+            process.stdout.write(`\n📊 Live test dashboard: ${url}${port !== this.port ? `  (port ${this.port} was busy)` : ''}\n\n`);
             if (this.autoOpen) openBrowser(url);
+        }).catch((e: NodeJS.ErrnoException) => {
+            process.stdout.write(`⚠️  Live dashboard could not start (${e.code || e.message}). Tests will still run.\n`);
         });
-    }
-
-    private send(res: http.ServerResponse, code: number, type: string, body: string | Buffer) {
-        res.writeHead(code, { 'Content-Type': type });
-        res.end(body);
     }
 
     // ── Static, shareable copy of the final dashboard ──────────
@@ -326,6 +311,7 @@ class LiveDashboardReporter implements Reporter {
                 att.url = 'artifacts/' + name;
             }
             for (const t of snap.tests) for (const a of t.attempts) for (const att of a.attachments) delete att.file;
+            snap.history = dashboardServer.readHistory(this.rootDir);
             fs.writeFileSync(path.join(this.outDir, 'state.js'), 'window.__STATIC_STATE__ = ' + JSON.stringify(snap) + ';');
             for (const f of ['index.html', 'detail.html', 'dashboard.css', 'dashboard.js'])
                 fs.copyFileSync(path.join(this.uiDir, 'ui', f), path.join(this.outDir, f));
@@ -335,18 +321,19 @@ class LiveDashboardReporter implements Reporter {
     }
 }
 
-function mime(f: string) {
-    const ext = path.extname(f).toLowerCase();
-    return ({
-        '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json',
-        '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webm': 'video/webm', '.zip': 'application/zip',
-        '.txt': 'text/plain', '.md': 'text/markdown',
-    } as Record<string, string>)[ext] || 'application/octet-stream';
-}
-
 function openBrowser(url: string) {
     const cmd = process.platform === 'win32' ? `start "" "${url}"` : process.platform === 'darwin' ? `open "${url}"` : `xdg-open "${url}"`;
     exec(cmd, () => { /* ignore — user can open the URL manually */ });
+}
+
+function safeJson(s?: string) { try { return s ? JSON.parse(s) : null; } catch { return null; } }
+
+function postJson(url: string, body: string): Promise<void> {
+    return new Promise((resolve) => {
+        const req = http.request(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } }, res => { res.resume(); res.on('end', () => resolve()); });
+        req.on('error', () => resolve());
+        req.end(body);
+    });
 }
 
 export default LiveDashboardReporter;
