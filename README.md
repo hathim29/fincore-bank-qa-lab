@@ -133,6 +133,8 @@ npm run dashboard
 
 ### Live Test Dashboard
 
+📘 **Full how-to guide:** [docs/LIVE_DASHBOARD.md](docs/LIVE_DASHBOARD.md). It covers running all tests, a single spec or a single test, re-runs, browsers and environments (`BASE_URL`), plus troubleshooting.
+
 A custom Playwright reporter plus a small local server (`tests/reporters/live-dashboard/`). It has no extra dependencies and works offline.
 
 ```bash
