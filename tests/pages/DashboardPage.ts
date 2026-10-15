@@ -56,6 +56,12 @@ export class DashboardPage extends BasePage {
         await expect(this.statCards).toBeVisible();
     }
 
+    // Number shown on any stat card, by its data-testid ("1,234" → 1234; "—" → NaN)
+    async getStatValue(cardTestId: string): Promise<number> {
+        const text = await this.page.getByTestId(cardTestId).locator('.stat-value').textContent();
+        return parseInt((text || '').replace(/,/g, ''), 10);
+    }
+
     async getTotalCustomers() {
         return parseInt(await this.statCustomers.textContent() || '0');
     }

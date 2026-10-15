@@ -10,13 +10,22 @@ router.get('/stats', async (req, res) => {
             txnToday, overdueLoans, cardsDue
         ] = await Promise.all([
             pool.query('SELECT COUNT(*) FROM customers'),
-            pool.query('SELECT COUNT(*) FROM accounts WHERE status = $1', ['active']),
+            pool.query(`SELECT
+                COUNT(*) FILTER (WHERE status='active') as active,
+                COUNT(*) FILTER (WHERE status='frozen') as frozen,
+                COUNT(*) FILTER (WHERE status='closed') as closed
+                FROM accounts`),
             pool.query(`SELECT
                 COUNT(*) as total,
                 COUNT(*) FILTER (WHERE status='active') as active,
-                COUNT(*) FILTER (WHERE status='overdue') as overdue
+                COUNT(*) FILTER (WHERE status='overdue') as overdue,
+                COUNT(*) FILTER (WHERE status='closed') as closed
                 FROM loans`),
-            pool.query('SELECT COUNT(*) FROM credit_cards WHERE status=$1', ['active']),
+            pool.query(`SELECT
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE status='active') as active,
+                COUNT(*) FILTER (WHERE status='blocked') as blocked
+                FROM credit_cards`),
             pool.query(`SELECT COUNT(*), COALESCE(SUM(amount),0) as total_amount
                 FROM transactions
                 WHERE created_at >= CURRENT_DATE`),
@@ -28,11 +37,16 @@ router.get('/stats', async (req, res) => {
 
         res.json({
             total_customers:      parseInt(customers.rows[0].count),
-            active_accounts:      parseInt(accounts.rows[0].count),
+            active_accounts:      parseInt(accounts.rows[0].active),
+            frozen_accounts:      parseInt(accounts.rows[0].frozen),
+            closed_accounts:      parseInt(accounts.rows[0].closed),
             total_loans:          parseInt(loans.rows[0].total),
             active_loans:         parseInt(loans.rows[0].active),
             overdue_loans:        parseInt(loans.rows[0].overdue),
-            active_cards:         parseInt(cards.rows[0].count),
+            closed_loans:         parseInt(loans.rows[0].closed),
+            total_cards:          parseInt(cards.rows[0].total),
+            active_cards:         parseInt(cards.rows[0].active),
+            blocked_cards:        parseInt(cards.rows[0].blocked),
             transactions_today:   parseInt(txnToday.rows[0].count),
             txn_amount_today:     parseFloat(txnToday.rows[0].total_amount),
             cards_due_soon:       parseInt(cardsDue.rows[0].count)

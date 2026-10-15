@@ -3,7 +3,7 @@ import { DashboardPage } from '../pages/DashboardPage';
 
 /**
  * Dashboard Page Tests
- * Covers: page load, 12 stat cards, navigation, recent transactions, RBAC
+ * Covers: page load, 12 stat cards (and their accuracy), navigation, recent transactions, RBAC
  */
 
 // ── Admin tests ────────────────────────────────────────────────
@@ -143,4 +143,62 @@ test.describe('Dashboard Page — Viewer', () => {
         await dashboardPage.assertNavLinksVisible();
     });
 
+});
+
+// ── Stat card accuracy (regression for BUG-FC-103) ─────────────
+// Each card must match an independent source: the filtered total from that
+// entity's own list API, not the dashboard API that feeds the card.
+// BUG-FC-103: four cards showed 0 because the stats API never sent their
+// fields and the page fell back to "|| 0". The old tests only checked that the
+// cards were not blank, so a believable wrong number passed.
+test.describe('Dashboard stat cards — accuracy', () => {
+
+    const cards = [
+        { card: 'stat-customers',       source: '/api/customers?limit=1' },
+        { card: 'stat-accounts',        source: '/api/accounts?status=active&limit=1' },
+        { card: 'stat-frozen',          source: '/api/accounts?status=frozen&limit=1' },
+        { card: 'stat-closed-accounts', source: '/api/accounts?status=closed&limit=1' },
+        { card: 'stat-loans',           source: '/api/loans?status=active&limit=1' },
+        { card: 'stat-overdue',         source: '/api/loans?status=overdue&limit=1' },
+        { card: 'stat-closed-loans',    source: '/api/loans?status=closed&limit=1' },
+        { card: 'stat-cards',           source: '/api/credit-cards?limit=1' },
+        { card: 'stat-active-cards',    source: '/api/credit-cards?status=active&limit=1' },
+        { card: 'stat-blocked-cards',   source: '/api/credit-cards?status=blocked&limit=1' },
+    ];
+
+    test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => {
+            sessionStorage.setItem('fincore_user', JSON.stringify({ username: 'admin', role: 'admin' }));
+        });
+    });
+
+    for (const { card, source } of cards) {
+        test(`${card} matches ${source.split('?')[0]} total`, async ({ page, request }) => {
+            const dashboard = new DashboardPage(page);
+            // Other specs create data in parallel, so re-read both sides until they agree
+            await expect(async () => {
+                await dashboard.goto();
+                await expect(page.getByTestId(card).locator('.stat-value')).not.toHaveText('—');
+                const shown = await dashboard.getStatValue(card);
+                const res = await request.get(source);
+                expect(res.ok()).toBeTruthy();
+                const { total } = await res.json();
+                expect(shown, `${card} on the dashboard`).toBe(Number(total));
+            }).toPass({ timeout: 20_000 });
+        });
+    }
+
+    test('stats API returns every field the dashboard displays', async ({ request }) => {
+        const res = await request.get('/api/dashboard/stats');
+        expect(res.status()).toBe(200);
+        const stats = await res.json();
+        for (const key of [
+            'total_customers', 'active_accounts', 'frozen_accounts', 'closed_accounts',
+            'transactions_today', 'active_loans', 'overdue_loans', 'closed_loans',
+            'total_cards', 'active_cards', 'blocked_cards', 'cards_due_soon',
+        ]) {
+            expect(stats, `stats.${key}`).toHaveProperty(key);
+            expect(typeof stats[key], `stats.${key} type`).toBe('number');
+        }
+    });
 });
