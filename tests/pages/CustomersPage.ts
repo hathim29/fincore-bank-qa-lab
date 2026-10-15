@@ -59,13 +59,19 @@ export class CustomersPage extends BasePage {
 
     // ── Search ─────────────────────────────────────────────────
     async search(term: string) {
-        await this.searchInput.fill(term);
-        await this.page.waitForResponse(r => r.url().includes('/api/customers'));
+        // Listen BEFORE acting: a fast response could arrive before a later listener starts
+        await Promise.all([
+            this.page.waitForResponse(r => r.url().includes('/api/customers')),
+            this.searchInput.fill(term),
+        ]);
     }
 
     async clearSearch() {
-        await this.searchInput.fill('');
-        await this.page.waitForResponse(r => r.url().includes('/api/customers'));
+        // Listen BEFORE acting: a fast response could arrive before a later listener starts
+        await Promise.all([
+            this.page.waitForResponse(r => r.url().includes('/api/customers')),
+            this.searchInput.fill(''),
+        ]);
     }
 
     // ── Filters ────────────────────────────────────────────────
@@ -75,8 +81,11 @@ export class CustomersPage extends BasePage {
     }
 
     async setRowsPerPage(rows: '10' | '25' | '50') {
-        await this.rowsPerPage.selectOption(rows);
-        await this.page.waitForResponse(r => r.url().includes('/api/customers'));
+        // Listen BEFORE acting: a fast response could arrive before a later listener starts
+        await Promise.all([
+            this.page.waitForResponse(r => r.url().includes('/api/customers')),
+            this.rowsPerPage.selectOption(rows),
+        ]);
     }
 
     // ── Table assertions ───────────────────────────────────────
@@ -192,10 +201,11 @@ export class CustomersPage extends BasePage {
     }
 
     async submitEditForm() {
-        await this.saveEditBtn.click();
-        await this.page.waitForResponse(
-            r => r.url().includes('/api/customers') && r.request().method() === 'PUT'
-        );
+        // Listen BEFORE acting: a fast response could arrive before a later listener starts
+        await Promise.all([
+            this.page.waitForResponse(r => r.url().includes('/api/customers') && r.request().method() === 'PUT'),
+            this.saveEditBtn.click(),
+        ]);
     }
 
     async assertEditSuccess(text?: string) {

@@ -94,68 +94,46 @@ test.describe('Credit Cards Page — Admin', () => {
 
     test('confirm payment button should be disabled until option selected', async () => {
         // Find a card with outstanding balance
-        await ccPage.filterByStatus('active');
-        await ccPage.clickCardRow(0);
-        const payBtn = ccPage['page'].getByTestId('card-pay-btn');
-        const hasPayBtn = await payBtn.isVisible().catch(() => false);
-        if (hasPayBtn) {
-            await ccPage.openPaymentFromPopup();
-            await ccPage.assertConfirmPayDisabled();
-            await ccPage.cancelPayment();
-        }
-        await ccPage.closeCardModalBtn();
+        await ccPage.openCardWithBalanceDue();
+        await ccPage.openPaymentFromPopup();
+        await ccPage.assertConfirmPayDisabled();
+        await ccPage.cancelPayment();
+        // Cancel closes every popup, including the card popup (same as the block dialog)
+        await expect(ccPage['page'].locator('#cardModal')).not.toBeVisible();
     });
 
     test('should enable confirm button when full payment selected', async () => {
-        await ccPage.filterByStatus('active');
-        await ccPage.clickCardRow(0);
-        const payBtn = ccPage['page'].getByTestId('card-pay-btn');
-        const hasPayBtn = await payBtn.isVisible().catch(() => false);
-        if (hasPayBtn) {
-            await ccPage.openPaymentFromPopup();
-            await ccPage.selectPayFull();
-            await ccPage.cancelPayment();
-        }
-        await ccPage.closeCardModalBtn();
+        await ccPage.openCardWithBalanceDue();
+        await ccPage.openPaymentFromPopup();
+        await ccPage.selectPayFull();
+        await ccPage.cancelPayment();
+        // Cancel closes every popup, including the card popup (same as the block dialog)
+        await expect(ccPage['page'].locator('#cardModal')).not.toBeVisible();
     });
 
     test('should enable confirm button when minimum payment selected', async () => {
-        await ccPage.filterByStatus('active');
-        await ccPage.clickCardRow(0);
-        const payBtn = ccPage['page'].getByTestId('card-pay-btn');
-        const hasPayBtn = await payBtn.isVisible().catch(() => false);
-        if (hasPayBtn) {
-            await ccPage.openPaymentFromPopup();
-            await ccPage.selectPayMinimum();
-            await ccPage.cancelPayment();
-        }
-        await ccPage.closeCardModalBtn();
+        await ccPage.openCardWithBalanceDue();
+        await ccPage.openPaymentFromPopup();
+        await ccPage.selectPayMinimum();
+        await ccPage.cancelPayment();
+        // Cancel closes every popup, including the card popup (same as the block dialog)
+        await expect(ccPage['page'].locator('#cardModal')).not.toBeVisible();
     });
 
     test('should pay minimum due successfully', async () => {
-        await ccPage.filterByStatus('active');
-        await ccPage.clickCardRow(0);
-        const payBtn = ccPage['page'].getByTestId('card-pay-btn');
-        const hasPayBtn = await payBtn.isVisible().catch(() => false);
-        if (hasPayBtn) {
-            await ccPage.openPaymentFromPopup();
-            await ccPage.selectPayMinimum();
-            await ccPage.confirmPayment();
-            await ccPage.assertPaymentSuccess('Payment successful');
-        }
+        await ccPage.openCardWithBalanceDue();
+        await ccPage.openPaymentFromPopup();
+        await ccPage.selectPayMinimum();
+        await ccPage.confirmPayment();
+        await ccPage.assertPaymentSuccess('Payment successful');
     });
 
     test('should pay custom amount successfully', async () => {
-        await ccPage.filterByStatus('active');
-        await ccPage.clickCardRow(0);
-        const payBtn = ccPage['page'].getByTestId('card-pay-btn');
-        const hasPayBtn = await payBtn.isVisible().catch(() => false);
-        if (hasPayBtn) {
-            await ccPage.openPaymentFromPopup();
-            await ccPage.selectPayCustom('100');
-            await ccPage.confirmPayment();
-            await ccPage.assertPaymentSuccess('Payment successful');
-        }
+        await ccPage.openCardWithBalanceDue();
+        await ccPage.openPaymentFromPopup();
+        await ccPage.selectPayCustom('100');
+        await ccPage.confirmPayment();
+        await ccPage.assertPaymentSuccess('Payment successful');
     });
 
     // ── Block / Unblock ────────────────────────────────────────

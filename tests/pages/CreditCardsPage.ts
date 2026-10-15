@@ -83,6 +83,23 @@ export class CreditCardsPage extends BasePage {
     }
 
     // ── Card Popup ─────────────────────────────────────────────
+    // Opens an active card that has a balance due, so payment tests always reach the
+    // Make Payment button. Fails loudly if the data has none (instead of silently skipping).
+    async openCardWithBalanceDue(): Promise<number> {
+        const res = await this.page.request.get('/api/credit-cards?status=active&limit=100');
+        const { data } = await res.json();
+        const card = data.find((c: any) => parseFloat(c.outstanding_balance) > 0 && parseFloat(c.minimum_due) > 0);
+        if (!card) throw new Error('Test data: no active card with a balance due. Re-seed the database.');
+        await this.filterByStatus('active');
+        await Promise.all([
+            this.page.waitForResponse(r => r.url().includes('/api/credit-cards')),
+            this.page.getByTestId('rows-per-page').selectOption('50'),
+        ]);
+        await this.page.getByTestId(`card-row-${card.id}`).click();
+        await expect(this.cardModal).toBeVisible();
+        return card.id;
+    }
+
     async clickCardRow(index = 0) {
         const rows = this.page.locator('[data-testid^="card-row-"]');
         await rows.nth(index).click();

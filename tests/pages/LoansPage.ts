@@ -84,6 +84,20 @@ export class LoansPage extends BasePage {
     }
 
     // ── Loan Popup ─────────────────────────────────────────────
+    // Creates a fresh loan through the API (so it always has pending EMIs) and opens it.
+    // Newest loans are listed first, so the new row is on page 1.
+    async openNewLoanWithPendingEmi(): Promise<number> {
+        const res = await this.page.request.post('/api/loans', {
+            data: { customer_id: 1, loan_type: 'personal', principal_amount: 120000, interest_rate: 12, tenure_months: 12 },
+        });
+        expect(res.status(), 'create loan for test').toBe(201);
+        const loan = await res.json();
+        await this.filterByStatus('active');
+        await this.page.getByTestId(`loan-row-${loan.id}`).click();
+        await expect(this.loanModal).toBeVisible();
+        return loan.id;
+    }
+
     async clickLoanRow(index = 0) {
         const rows = this.page.locator('[data-testid^="loan-row-"]');
         await rows.nth(index).click();
