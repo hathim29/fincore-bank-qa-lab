@@ -26,6 +26,18 @@ const HISTORY_KEEP = 20;
 const FAILISH = ['likely-app-bug', 'likely-test-env', 'needs-triage'];
 const BROWSERS = ['chromium', 'firefox', 'webkit'];
 
+// ── Environment naming (BASE_URL → Local / SIT / DEV / host) ───────────────
+function describeEnv(url) {
+    const u = (url || 'http://localhost:3000').replace(/\/$/, '');
+    let host = u;
+    try { host = new URL(u).host; } catch { /* keep raw */ }
+    const name = /^(localhost|127\.0\.0\.1)(:|$)/.test(host) ? 'Local'
+        : /^dev\./i.test(host) ? 'DEV'
+        : /fincore-qalab\.com$/i.test(host) ? 'SIT'
+        : host;
+    return { name, url: u, host };
+}
+
 // ── History (written by the reporter at the end of every run) ──────────────
 function writeHistory(root, snapshot, options) {
     const dir = path.join(root, HISTORY_DIR);
@@ -41,7 +53,7 @@ function writeHistory(root, snapshot, options) {
     const id = new Date(run.startedAt).toISOString().replace(/[:.]/g, '-');
     const entry = {
         id, startedAt: run.startedAt, finishedAt: run.finishedAt, status: run.status,
-        total: snapshot.tests.length, counts, options: options || null, results,
+        total: snapshot.tests.length, counts, options: options || null, env: run.env || null, results,
     };
     fs.writeFileSync(path.join(dir, id + '.json'), JSON.stringify(entry));
     const files = fs.readdirSync(dir).filter(f => f.endsWith('.json')).sort();
@@ -204,6 +216,7 @@ function createController(root, getPort, onLog) {
             options: current,
             browsers: browsersInstalled(),
             failed: lastFailed(),
+            env: describeEnv(process.env.BASE_URL),
             catalog,
         };
     }
@@ -387,6 +400,6 @@ function findRoot(dir) {
     return null;
 }
 
-module.exports = { createDashboard, writeHistory, readHistory, HISTORY_DIR, REPORT_DIR };
+module.exports = { createDashboard, writeHistory, readHistory, describeEnv, HISTORY_DIR, REPORT_DIR };
 
 if (require.main === module) main().catch(e => { console.error(e); process.exit(1); });

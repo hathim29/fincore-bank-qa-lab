@@ -89,6 +89,10 @@
   function renderIndex() {
     renderControls();
     renderRuns();
+    const env = (state.run && state.run.env) || control.env;
+    const chip = $('envChip');
+    if (env) { chip.style.display = ''; chip.innerHTML = `Env <b style="color:var(--teal)">${esc(env.name)}</b> <span style="color:var(--dim)">· ${esc(env.host)}</span>`; chip.title = env.url; }
+    else chip.style.display = 'none';
     const run = state.run;
     $('empty').style.display = run ? 'none' : '';
     $('main').style.display = run ? '' : 'none';
@@ -124,7 +128,9 @@
     $('bar').innerHTML = ORDER.filter(k => c[k]).map(k => `<div style="width:${c[k] / c.total * 100}%;background:${COLORS[k]}" title="${LABELS[k]}: ${c[k]}"></div>`).join('')
       + (st === 'running' ? '<span class="running-glow"></span>' : '');
     $('remaining').textContent = st === 'running' ? `${c.total - c.done} remaining` : `Finished in ${fmtDur((run.finishedAt || Date.now()) - run.startedAt)}`;
-    $('runLabel').textContent = control.options && control.enabled ? `${control.options.label} · ${control.options.browsers.join(', ')}${control.options.headed ? ' · headed' : ''}` : '';
+    const opt = isStarting() ? control.options : (run.options || control.options);
+    const envName = (run.env || control.env || {}).name;
+    $('runLabel').innerHTML = opt ? `${esc(opt.label)} · ${esc(opt.browsers.join(', '))}${opt.headed ? ' · headed' : ''}${envName ? ` · <b>${esc(envName)}</b>` : ''}` : '';
 
     // now running
     const runningTests = (run.running || []).map(id => byId.get(id)).filter(Boolean);
@@ -307,7 +313,7 @@
       const fails = FAILISH.reduce((a, k) => a + (h.counts[k] || 0), 0);
       const done = Object.values(h.counts).reduce((a, b) => a + b, 0) || 1;
       const label = h.options ? h.options.label : 'All tests';
-      const br = h.options ? h.options.browsers.join(', ') : 'chromium';
+      const br = (h.options ? h.options.browsers.join(', ') : 'chromium') + (h.env ? ' · ' + h.env.name : '');
       return `<div class="runrow">
         <span class="rdot" style="background:${h.status === 'passed' ? 'var(--pass)' : h.status === 'interrupted' ? 'var(--flaky)' : 'var(--fail)'}"></span>
         <span class="rwhen">${esc(when(h.startedAt))}</span>

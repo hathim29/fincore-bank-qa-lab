@@ -239,3 +239,9 @@ code.cmd { font-family: var(--mono); background: #08151f; border: 1px solid var(
 .hd { height: 5px; border-radius: 2px; }
 #dActionsTop { display: inline-flex; align-items: center; margin-right: 6px; }
 @media (max-width: 1100px) { .hrow { grid-template-columns: 1fr; } .runrow { grid-template-columns: 12px 1fr 90px 60px; } .runrow .rwhen, .runrow .rbar { display: none; } }
+
+/* environments footnote */
+.envnote { margin-top: 20px; padding: 12px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.envnote b { color: var(--text); }
+.envnote code { font-family: var(--mono); font-size: 12px; background: #08151f; padding: 1px 6px; border-radius: 5px; color: #cfe3ef; }
+.runlabel b { color: var(--text); }

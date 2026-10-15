@@ -15,35 +15,35 @@ import { API, URLS } from '../fixtures/testData';
 
 test.describe('Security — API Access Control', () => {
 
-    const BASE = 'http://localhost:3000';
+    // Requests go to the configured baseURL (BASE_URL env, default http://localhost:3000)
 
     // ── No auth header tests ───────────────────────────────────
     // The API has no server-side authentication middleware.
     // All endpoints are accessible without any auth token.
 
     test('API is accessible without any authentication', async ({ request }) => {
-        const res = await request.get(`${BASE}/api/customers`);
+        const res = await request.get(`/api/customers`);
         // Documents that the API has no server-side auth — returns 200 not 401
         expect(res.status()).toBe(200);
     });
 
     test('can read all accounts without authentication', async ({ request }) => {
-        const res = await request.get(`${BASE}/api/accounts`);
+        const res = await request.get(`/api/accounts`);
         expect(res.status()).toBe(200);
     });
 
     test('can read all loans without authentication', async ({ request }) => {
-        const res = await request.get(`${BASE}/api/loans`);
+        const res = await request.get(`/api/loans`);
         expect(res.status()).toBe(200);
     });
 
     test('can read all transactions without authentication', async ({ request }) => {
-        const res = await request.get(`${BASE}/api/transactions`);
+        const res = await request.get(`/api/transactions`);
         expect(res.status()).toBe(200);
     });
 
     test('can read all credit cards without authentication', async ({ request }) => {
-        const res = await request.get(`${BASE}/api/credit-cards`);
+        const res = await request.get(`/api/credit-cards`);
         expect(res.status()).toBe(200);
     });
 
@@ -53,7 +53,7 @@ test.describe('Security — API Access Control', () => {
 
     test('viewer session can call POST customers API directly', async ({ request }) => {
         // Viewer role is enforced only in the UI — not the API
-        const res = await request.post(`${BASE}/api/customers`, {
+        const res = await request.post(`/api/customers`, {
             data: {
                 name:       'Security Test Customer',
                 email:      `security.test.${Date.now()}@gmail.com`,
@@ -68,13 +68,13 @@ test.describe('Security — API Access Control', () => {
 
     test('viewer session can call PUT account status API directly', async ({ request }) => {
         // First get an account ID
-        const accounts = await request.get(`${BASE}/api/accounts?limit=1&status=active`);
+        const accounts = await request.get(`/api/accounts?limit=1&status=active`);
         const data = await accounts.json();
         const accountId = data.data[0]?.id;
 
         if (accountId) {
             // Viewer can freeze an account directly via API — UI would not show this button
-            const res = await request.put(`${BASE}/api/accounts/${accountId}`, {
+            const res = await request.put(`/api/accounts/${accountId}`, {
                 data: {
                     status:       'frozen',
                     reason:       'Security test — demonstrating API RBAC gap',
@@ -85,7 +85,7 @@ test.describe('Security — API Access Control', () => {
             expect(res.status()).toBe(200);
 
             // Restore account to active
-            await request.put(`${BASE}/api/accounts/${accountId}`, {
+            await request.put(`/api/accounts/${accountId}`, {
                 data: {
                     status:       'active',
                     reason:       'Security test — restoring after RBAC gap test',

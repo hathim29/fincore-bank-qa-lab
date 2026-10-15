@@ -2,13 +2,18 @@ import { defineConfig, devices } from '@playwright/test';
 
 const extraBrowsers = (process.env.FINCORE_BROWSERS || '').split(',');
 
+// Target environment — Local by default. Point the suite at another environment with
+// BASE_URL, e.g.  BASE_URL=https://fincore-qalab.com npm run dashboard
+const BASE_URL = (process.env.BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
+const IS_LOCAL = /\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(BASE_URL);
+
 export default defineConfig({
     // ── Test directory ─────────────────────────────────────────
     testDir: './tests/specs',
 
     // ── Base URL — all page.goto('/login.html') resolves to this
     use: {
-        baseURL: 'http://localhost:3000',
+        baseURL: BASE_URL,
 
         // Keep trace, screenshot and video for every failed attempt —
         // the live dashboard (npm run test:dashboard) shows them per failure
@@ -65,11 +70,11 @@ export default defineConfig({
         }] : []),
     ],
 
-    // ── Web server — auto-starts server before tests ───────────
-    webServer: {
+    // ── Web server — auto-starts the local app (Local runs only) ─
+    webServer: IS_LOCAL ? {
         command: 'npm run dev',
         url: 'http://localhost:3000',
         reuseExistingServer: true,  // always reuse — avoids port conflicts
         timeout: 20000,
-    },
+    } : undefined,
 });

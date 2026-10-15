@@ -18,6 +18,7 @@
       <span class="chip">Elapsed <b id="elapsed">00:00</b></span>
       <span class="chip">ETA <b id="eta">—</b></span>
       <span class="chip">Workers <b id="workers">1</b> · Retries <b id="retries">0</b></span>
+      <span class="chip" id="envChip" style="display:none"></span>
       <span class="pill running" id="status"><span class="dot"></span><span id="statusText">Connecting</span></span>
     </div>
   </div>
@@ -80,6 +81,11 @@
   <div class="card runs" id="runsCard" style="display:none">
     <h2>Recent runs <span id="runsInfo"></span></h2>
     <div id="runs"></div>
+  </div>
+
+  <div class="envnote">
+    <b>Environments:</b> runs against <b>Local</b> by default. The same suite can target <b>SIT</b> or <b>DEV</b> by setting
+    <code>BASE_URL</code> (e.g. <code>BASE_URL=https://fincore-qalab.com npm run dashboard</code>), so developers can run it against their own environment too.
   </div>
 
   <div class="foot">

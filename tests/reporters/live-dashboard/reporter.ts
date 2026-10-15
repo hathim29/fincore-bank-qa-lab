@@ -101,6 +101,7 @@ class LiveDashboardReporter implements Reporter {
         workers: 1,
         retries: 0,
         running: [] as string[],
+        env: null as null | { name: string; url: string; host: string },
     };
 
     // ── Lifecycle ──────────────────────────────────────────────
@@ -136,6 +137,20 @@ class LiveDashboardReporter implements Reporter {
             this.order.push(test.id);
         }
         this.run.total = this.order.length;
+
+        // Which environment this run targets (BASE_URL → Local / SIT / DEV)
+        const project = config.projects.find(p => p.name !== 'setup');
+        this.run.env = dashboardServer.describeEnv(project?.use?.baseURL);
+
+        // Runs started from the command line have no dashboard options — describe what actually ran
+        if (!this.runOptions) {
+            const specs = [...new Set(this.order.map(id => this.tests.get(id)!.spec))];
+            const projects = [...new Set(this.order.map(id => this.tests.get(id)!.project))].filter(Boolean);
+            const label = specs.length === 1 ? `${specs[0]}.spec.ts` : specs.length <= 3 ? specs.map(s => s + '.spec.ts').join(', ') : `${specs.length} specs`;
+            this.runOptions = { scope: 'cli', label: `${label} (CLI)`, browsers: projects.length ? projects : ['chromium'], headed: false, startedAt: this.run.startedAt };
+        }
+        (this.run as any).options = this.runOptions;
+
         if (!this.serverUrl) this.startServer();
         this.broadcast('snapshot', this.snapshot());
     }

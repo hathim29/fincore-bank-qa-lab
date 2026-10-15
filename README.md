@@ -178,6 +178,13 @@ npm run test:dashboard -- tests/specs/login.spec.ts    # one-off run of a single
 
 **Shareable report:** a static copy of every run, history included, is saved to `live-dashboard-report/index.html`.
 
+**Environments:** runs target **Local** (`http://localhost:3000`) by default, and Playwright starts the local server for you. To run the same suite against another environment, set `BASE_URL`. The local server isn't started for non-local runs, and every run is tagged with its environment in the header, run label and history.
+
+```bash
+BASE_URL=https://fincore-qalab.com npm run dashboard          # macOS / Linux / Git Bash
+$env:BASE_URL="https://fincore-qalab.com"; npm run dashboard  # Windows PowerShell
+```
+
 > **Windows / PowerShell:** to pass the reporter on the command line yourself, quote it: `--reporter="list,./tests/reporters/live-dashboard/reporter.ts"`. The npm scripts above avoid this.
 
 Options: `LIVE_DASHBOARD_PORT` (default 9400), `LIVE_DASHBOARD_OPEN=0` (don't open the browser), `LIVE_DASHBOARD_EXIT=1` (`test:dashboard` only: don't keep serving after the run). On CI it never opens a browser or blocks, and CI stays Chromium-only.
