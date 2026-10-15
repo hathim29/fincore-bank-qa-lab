@@ -34,7 +34,7 @@ jobs:
         run: node db/seed.js
 
       - name: Run Playwright tests
-        run: npx playwright test --reporter=list
+        run: npx playwright test --reporter=list,github,html
         env:
           CI: true
 
