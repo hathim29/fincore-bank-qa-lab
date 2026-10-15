@@ -126,7 +126,79 @@ npx playwright test --headed
 
 # View HTML report
 npx playwright show-report
+
+# Live test dashboard: opens http://localhost:9400 and starts a full run
+npm run dashboard
 ```
+
+### Live Test Dashboard
+
+📘 **Full how-to guide:** [docs/LIVE_DASHBOARD.md](docs/LIVE_DASHBOARD.md). It covers running all tests, a single spec or a single test, re-runs, browsers and environments (`BASE_URL`), plus troubleshooting.
+
+A custom Playwright reporter plus a small local server (`tests/reporters/live-dashboard/`). It has no extra dependencies and works offline.
+
+```bash
+npm run dashboard                 # open the dashboard and start a full run
+npm run dashboard -- --no-run     # open it without starting a run (e.g. to review history)
+npm run test:dashboard            # one-off run that hosts its own dashboard
+npm run test:dashboard -- tests/specs/login.spec.ts    # one-off run of a single spec
+```
+
+**Watch a run live**
+- Progress ring and bar, elapsed time and ETA, and the test running right now
+- Per-spec progress and a live feed of results
+
+**Drill into anything**
+- Click a **spec** to see all its tests, grouped by `describe` or sorted slowest first
+- Click any **test**, passed or failed, to open its detail window:
+  - every attempt, with the error and code snippet
+  - the steps, with the failed step highlighted
+  - the screenshot, video and trace (these are kept for failed attempts only)
+
+**Run history**
+- The last 20 runs are saved to `live-dashboard-history/` (git-ignored)
+- Every test shows a pass/fail strip, and its detail window shows a duration trend plus stats: passed / failed / flaky counts, average time, and the latest run compared with the average
+- A **Recent runs** list sits on the main page
+
+**Run controls** (`npm run dashboard` only)
+- **▶ Run…** picks what to run: all tests, failed & flaky from the last run, one spec, or one test (searchable)
+- It can also choose browsers (Chromium · Firefox · WebKit) and headed mode. Firefox and WebKit need a one-time `npx playwright install firefox webkit`. Picking several browsers shows a run-time warning, because each browser runs one after another.
+- **↻ Re-run failed** is a one-click re-run of the last run's failures. **■ Stop** ends a run in progress.
+- Runs always use 1 worker: the tests share one database, so running them in parallel would make them interfere with each other.
+
+**Failure triage:** every failure is classified after retries:
+
+| Type | How it's decided |
+|---|---|
+| **Flaky** | Failed, then passed on retry (reported by Playwright) |
+| **Known bug** | Test is tagged with a `known-bug` annotation and declared with `test.fail()` |
+| **Likely app bug** | An `expect()` assertion failed |
+| **Likely test / env issue** | Timeout, locator, overlay or network problem with no failed assertion |
+| **Needs triage** | Anything else |
+
+*Flaky* and *Known bug* are exact. The other three are first-pass guesses for a QA engineer to confirm.
+
+**Shareable report:** a static copy of every run, history included, is saved to `live-dashboard-report/index.html`.
+
+**Environments:** runs target **Local** (`http://localhost:3000`) by default, and Playwright starts the local server for you. To run the same suite against another environment, set `BASE_URL`. The local server isn't started for non-local runs, and every run is tagged with its environment in the header, run label and history.
+
+```bash
+BASE_URL=https://fincore-qalab.com npm run dashboard          # macOS / Linux / Git Bash
+$env:BASE_URL="https://fincore-qalab.com"; npm run dashboard  # Windows PowerShell
+```
+
+> **Windows / PowerShell:** to pass the reporter on the command line yourself, quote it: `--reporter="list,./tests/reporters/live-dashboard/reporter.ts"`. The npm scripts above avoid this.
+
+Options: `LIVE_DASHBOARD_PORT` (default 9400), `LIVE_DASHBOARD_OPEN=0` (don't open the browser), `LIVE_DASHBOARD_EXIT=1` (`test:dashboard` only: don't keep serving after the run). On CI it never opens a browser or blocks, and CI stays Chromium-only.
+
+### Known bugs as tests
+
+`tests/specs/known-bugs.spec.ts` holds regression tests for open defects. Each asserts the *correct* behaviour and is declared with `test.fail()`, so CI stays green while the bug is open. When the bug is fixed, the test passes, Playwright flags it, and `test.fail()` should be removed.
+
+| Tag | Defect |
+|---|---|
+| Known Bug 1 | EMI due dates returned as UTC timestamps, shifting by one day in non-UTC time zones |
+| Known Bug 2 | EMI schedule mixes two date sources: duplicate or out-of-order due dates and an inflated overdue count |
 
 ---
 
@@ -135,15 +207,16 @@ npx playwright show-report
 | Module | Spec File | Tests | Status |
 |---|---|---|---|
 | Login | login.spec.ts | 13 | ✅ Passing |
-| Dashboard | dashboard.spec.ts | 21 | ✅ Passing |
+| Dashboard | dashboard.spec.ts | 22 | ✅ Passing |
 | Customers | customers.spec.ts | 20 | ✅ Passing |
 | Accounts | accounts.spec.ts | 23 | ✅ Passing |
 | Transactions | transactions.spec.ts | 21 | ✅ Passing |
 | Loans | loans.spec.ts | 23 | ✅ Passing |
 | Credit Cards | credit-cards.spec.ts | 27 | ✅ Passing |
 | Security | security.spec.ts | 9 | ✅ Passing |
-| Onboarding | onboarding.spec.ts | 14 | ✅ Passing |
-| **Total** | | **171** | **✅ All Passing** |
+| Onboarding | onboarding.spec.ts | 13 | ✅ Passing |
+| Known Bugs | known-bugs.spec.ts | 2 | 🐞 Expected to fail (open defects) |
+| **Total** | | **173** | |
 
 Full Page Object Model (POM) architecture — every page has a dedicated Page Object class. Tests use `data-testid` selectors throughout.
 

@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "test:dashboard": "playwright test --reporter=list,./tests/reporters/live-dashboard/reporter.ts",
+    "dashboard": "node tests/reporters/live-dashboard/server.js"
   },
   "keywords": [],
   "author": "",

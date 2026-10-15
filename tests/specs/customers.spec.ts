@@ -80,7 +80,7 @@ test.describe('Customers Page — Admin', () => {
 
     test('should add a new customer successfully', async ({ request }) => {
         const customer = newCustomer();
-        const res = await request.post('http://localhost:3000/api/customers', {
+        const res = await request.post('/api/customers', {
             data: { name: customer.name, email: customer.email, phone: customer.phone, city: customer.city, kyc_status: 'pending' }
         });
         expect(res.status()).toBe(201);
@@ -89,7 +89,7 @@ test.describe('Customers Page — Admin', () => {
     });
 
     test('should show error when name is missing', async ({ request }) => {
-        const res = await request.post('http://localhost:3000/api/customers', {
+        const res = await request.post('/api/customers', {
             data: { email: `missing.name.${Date.now()}@test.com` }
         });
         expect(res.status()).toBe(400);
@@ -98,7 +98,7 @@ test.describe('Customers Page — Admin', () => {
     });
 
     test('should show error when email is missing', async ({ request }) => {
-        const res = await request.post('http://localhost:3000/api/customers', {
+        const res = await request.post('/api/customers', {
             data: { name: 'No Email Customer' }
         });
         expect(res.status()).toBe(400);
@@ -108,12 +108,12 @@ test.describe('Customers Page — Admin', () => {
 
     test('should show error for duplicate email', async ({ request }) => {
         const email = `duplicate.test.${Date.now()}@gmail.com`;
-        const first = await request.post('http://localhost:3000/api/customers', {
+        const first = await request.post('/api/customers', {
             data: { name: 'Original Customer', email, phone: '9876543210', city: 'Chennai', kyc_status: 'pending' }
         });
         expect(first.status()).toBe(201);
         // Try duplicate with all required fields — should fail on email uniqueness
-        const res = await request.post('http://localhost:3000/api/customers', {
+        const res = await request.post('/api/customers', {
             data: { name: 'Duplicate Customer', email, phone: '9876543211' }
         });
         expect(res.status()).toBe(400);
