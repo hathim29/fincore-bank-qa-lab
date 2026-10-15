@@ -48,13 +48,19 @@ export class AccountsPage extends BasePage {
 
     // ── Filters ────────────────────────────────────────────────
     async filterByType(type: 'savings' | 'current' | 'salary' | '') {
-        await this.typeFilter.selectOption(type);
-        await this.page.waitForResponse(r => r.url().includes('/api/accounts'));
+        // Listen BEFORE acting: a fast response could arrive before a later listener starts
+        await Promise.all([
+            this.page.waitForResponse(r => r.url().includes('/api/accounts')),
+            this.typeFilter.selectOption(type),
+        ]);
     }
 
     async filterByStatus(status: 'active' | 'frozen' | 'closed' | '') {
-        await this.statusFilter.selectOption(status);
-        await this.page.waitForResponse(r => r.url().includes('/api/accounts'));
+        // Listen BEFORE acting: a fast response could arrive before a later listener starts
+        await Promise.all([
+            this.page.waitForResponse(r => r.url().includes('/api/accounts')),
+            this.statusFilter.selectOption(status),
+        ]);
     }
 
     // ── View Account Popup ─────────────────────────────────────
@@ -113,10 +119,11 @@ export class AccountsPage extends BasePage {
     }
 
     async confirmAction() {
-        await this.confirmActionBtn.click();
-        await this.page.waitForResponse(
-            r => r.url().includes('/api/accounts') && r.request().method() === 'PUT'
-        );
+        // Listen BEFORE acting: a fast response could arrive before a later listener starts
+        await Promise.all([
+            this.page.waitForResponse(r => r.url().includes('/api/accounts') && r.request().method() === 'PUT'),
+            this.confirmActionBtn.click(),
+        ]);
     }
 
     async cancelAction() {

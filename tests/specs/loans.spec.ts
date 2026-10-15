@@ -106,32 +106,23 @@ test.describe('Loans Page — Admin', () => {
     // ── Pay EMI ────────────────────────────────────────────────
 
     test('should open pay EMI modal from popup', async () => {
-        await loansPage.filterByStatus('active');
-        await loansPage.clickLoanRow(0);
-        // Check if pay EMI button exists — depends on loan having pending EMIs
-        const payBtn = loansPage['page'].getByTestId('pay-emi-btn').first();
-        const hasPayBtn = await payBtn.isVisible().catch(() => false);
-        if (hasPayBtn) {
-            await payBtn.click();
-            await expect(loansPage['page'].locator('#payEmiModal')).toBeVisible();
-            // Cancel
-            await loansPage['page'].locator('#cancelPayEmiModal').click();
-        }
-        await loansPage.closeLoanModalBtn();
+        // A fresh loan always has pending EMIs, so the Pay EMI button is always there
+        await loansPage.openNewLoanWithPendingEmi();
+        await loansPage['page'].getByTestId('pay-emi-btn').first().click();
+        await expect(loansPage['page'].locator('#payEmiModal')).toBeVisible();
+        // Cancel closes every popup, including the loan popup
+        await loansPage['page'].locator('#cancelPayEmiModal').click();
+        await expect(loansPage['page'].locator('#payEmiModal')).not.toBeVisible();
+        await expect(loansPage['page'].locator('#loanModal')).not.toBeVisible();
     });
 
     test('should pay an EMI successfully', async () => {
-        await loansPage.filterByStatus('active');
-        await loansPage.clickLoanRow(0);
-        const payBtn = loansPage['page'].getByTestId('pay-emi-btn').first();
-        const hasPayBtn = await payBtn.isVisible().catch(() => false);
-        if (hasPayBtn) {
-            await payBtn.click();
-            await loansPage.selectPaymentChannel('UPI-GPay');
-            await loansPage.confirmEmiPayment();
-            // Modal closes and popup refreshes
-            await loansPage.assertTableVisible();
-        }
+        await loansPage.openNewLoanWithPendingEmi();
+        await loansPage['page'].getByTestId('pay-emi-btn').first().click();
+        await loansPage.selectPaymentChannel('UPI-GPay');
+        await loansPage.confirmEmiPayment();
+        // Modal closes and popup refreshes
+        await loansPage.assertTableVisible();
     });
 
     // ── Create New Loan ────────────────────────────────────────
