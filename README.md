@@ -200,6 +200,8 @@ Options: `LIVE_DASHBOARD_PORT` (default 9400), `LIVE_DASHBOARD_OPEN=0` (don't op
 | Known Bug 1 | EMI due dates returned as UTC timestamps, shifting by one day in non-UTC time zones |
 | Known Bug 2 | EMI schedule mixes two date sources: duplicate or out-of-order due dates and an inflated overdue count |
 
+**Fixed:** BUG-FC-103, dashboard cards showing 0. The stats API never sent `total_cards`, `blocked_cards`, `frozen_accounts`, `closed_accounts` or `closed_loans`, and the page's `|| 0` fallback turned each missing field into a believable zero (Total Cards 0 instead of 17). The API now returns every field, the page shows "—" instead of 0 if a field is ever missing, and `dashboard.spec.ts` checks each card against the matching list API total.
+
 ---
 
 ## Automation Test Coverage
@@ -207,7 +209,7 @@ Options: `LIVE_DASHBOARD_PORT` (default 9400), `LIVE_DASHBOARD_OPEN=0` (don't op
 | Module | Spec File | Tests | Status |
 |---|---|---|---|
 | Login | login.spec.ts | 13 | ✅ Passing |
-| Dashboard | dashboard.spec.ts | 22 | ✅ Passing |
+| Dashboard | dashboard.spec.ts | 33 | ✅ Passing |
 | Customers | customers.spec.ts | 20 | ✅ Passing |
 | Accounts | accounts.spec.ts | 23 | ✅ Passing |
 | Transactions | transactions.spec.ts | 21 | ✅ Passing |
@@ -216,7 +218,7 @@ Options: `LIVE_DASHBOARD_PORT` (default 9400), `LIVE_DASHBOARD_OPEN=0` (don't op
 | Security | security.spec.ts | 9 | ✅ Passing |
 | Onboarding | onboarding.spec.ts | 13 | ✅ Passing |
 | Known Bugs | known-bugs.spec.ts | 2 | 🐞 Expected to fail (open defects) |
-| **Total** | | **173** | |
+| **Total** | | **184** | |
 
 Full Page Object Model (POM) architecture — every page has a dedicated Page Object class. Tests use `data-testid` selectors throughout.
 
@@ -271,7 +273,7 @@ Swagger UI is available at:
 
 ## CI/CD
 
-GitHub Actions runs the full 171-test Playwright suite on every push to main.
+GitHub Actions runs the full 184-test Playwright suite on every push to main.
 
 **Pipeline:** Checkout → Node 20 → Install → Playwright browsers → Create .env → Seed DB → Run tests → Upload report
 
